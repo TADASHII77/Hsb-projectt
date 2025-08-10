@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { generateAndSendOtp, verifyOtp, clearOtp, getResendRemainingMs, formatSeconds } from '../services/otp';
 
 const ExpertContactForm = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1); // 1 = initial form, 2 = verification
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [resendRemainingMs, setResendRemainingMs] = useState(0);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -22,16 +27,113 @@ const ExpertContactForm = () => {
 
   const handleSendVerification = (e) => {
     e.preventDefault();
-    console.log('Sending verification code to:', formData.phone);
-    alert('Verification code sent to your phone number!');
-    setStep(2);
+    if (!formData.phone) {
+      alert('Please enter your phone number.');
+      return;
+    }
+    try {
+      setIsSendingCode(true);
+      const { code } = generateAndSendOtp(formData.phone);
+      // Also log directly for clarity (the service logs too)
+      // eslint-disable-next-line no-console
+      console.log('[OTP] Sent code:', code);
+      alert('Verification code sent to your phone number!');
+      setStep(2);
+      setResendRemainingMs(getResendRemainingMs(formData.phone));
+    } catch (err) {
+      alert('Failed to send verification code. Please try again.');
+    } finally {
+      setIsSendingCode(false);
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleVerifyOtp = () => {
+    if (!formData.phone || !formData.verificationCode) {
+      alert('Enter the verification code.');
+      return;
+    }
+    setIsVerifying(true);
+    const result = verifyOtp(formData.phone, formData.verificationCode);
+    if (result.ok) {
+      setOtpVerified(true);
+      clearOtp(formData.phone);
+      alert('Phone verified! Please set your password.');
+    } else {
+      const reason = result.reason === 'EXPIRED' ? 'Code expired.' : result.reason === 'MISMATCH' ? 'Incorrect code.' : 'Invalid code.';
+      alert(reason);
+    }
+    setIsVerifying(false);
+  };
+
+  useEffect(() => {
+    if (step !== 2) return;
+    const t = setInterval(() => {
+      setResendRemainingMs(getResendRemainingMs(formData.phone));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [step, formData.phone]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Contact form submitted:', formData);
-    alert('Successfully registered! You will be contacted by verified experts.');
-    navigate('/');
+    if (!otpVerified) {
+      alert('Please verify the OTP first.');
+      return;
+    }
+    try {
+      // Retrieve draft job saved from JobPosting
+      const draft = localStorage.getItem('draftJob');
+      const draftJob = draft ? JSON.parse(draft) : null;
+      if (!draftJob) {
+        alert('Your job details were not found. Please start again.');
+        navigate('/job');
+        return;
+      }
+
+      // 1) Register customer (or update) with hashed password in backend
+      const api = (await import('../services/api')).default;
+      const regRes = await api.registerCustomer({
+        name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+      });
+      if (!regRes.success) {
+        alert(regRes.message || 'Error creating account');
+        return;
+      }
+
+      // 2) Build final payload including contact info
+      const jobData = {
+        ...draftJob,
+        customerInfo: {
+          name: formData.fullName,
+          email: formData.email,
+          phone: formData.phone
+        }
+      };
+
+      // Persist user session (basic)
+      localStorage.setItem('userId', `user_${Date.now()}`);
+      localStorage.setItem('userName', formData.fullName);
+      localStorage.setItem('userEmail', formData.email);
+      localStorage.setItem('userPhone', formData.phone);
+      localStorage.setItem('userType', 'customer');
+
+      // 3) Post job now
+      const response = await api.post('/jobs', jobData);
+
+      if (response.success) {
+        alert('Job posted successfully! You will be contacted by verified experts soon.');
+        // Cleanup draft
+        localStorage.removeItem('draftJob');
+        navigate('/user-dashboard');
+      } else {
+        alert('Error posting job: ' + (response.message || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('Error completing job posting:', err);
+      alert('Error submitting registration. Please try again.');
+    }
   };
 
   return (
@@ -108,7 +210,7 @@ const ExpertContactForm = () => {
             <>
               <div>
                 <p className="text-base lg:text-[18px] font-roboto text-black mb-4 lg:mb-[22px]">
-                  Enter one-time verification code sent on your phone number.
+          Enter one-time verification code sent on your phone number.
                 </p>
                 <div className="w-full max-w-[650px] h-[46px] bg-white border border-black rounded-[10px] flex items-center px-[12px]">
                   <input
@@ -121,9 +223,28 @@ const ExpertContactForm = () => {
                     required
                   />
                 </div>
+        <div className="mt-3 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleVerifyOtp}
+            disabled={isVerifying}
+            className={`px-4 py-2 rounded-md text-white ${isVerifying ? 'bg-gray-400' : 'bg-[#AF2638] hover:bg-red-700'}`}
+          >
+            {isVerifying ? 'Verifying...' : 'Verify Code'}
+          </button>
+          <button
+            type="button"
+            onClick={handleSendVerification}
+            disabled={isSendingCode || resendRemainingMs > 0}
+            className={`px-4 py-2 rounded-md border ${resendRemainingMs > 0 ? 'text-gray-400 border-gray-300' : 'text-[#AF2638] border-[#AF2638]'}`}
+          >
+            {resendRemainingMs > 0 ? `Resend in ${formatSeconds(resendRemainingMs)}s` : 'Resend Code'}
+          </button>
+        </div>
               </div>
 
-              {/* Password */}
+              {/* Password (shown only after OTP verified) */}
+              {otpVerified && (
               <div>
                 <p className="text-base lg:text-[18px] font-roboto text-black mb-4 lg:mb-[22px]">
                   Choose a new password for your HSB account.
@@ -140,16 +261,19 @@ const ExpertContactForm = () => {
                   />
                 </div>
               </div>
+              )}
 
-              {/* Submit Button */}
-              <div>
-                <button
-                  type="submit"
-                  className="w-full sm:w-[235px] h-[46px] bg-[#AF2638] rounded-[10px] flex items-center justify-center"
-                >
-                  <span className="text-base lg:text-[18px] font-semibold font-roboto text-white">Find Verified Experts</span>
-                </button>
-              </div>
+              {/* Submit Button (enabled after OTP verified) */}
+              {otpVerified && (
+                <div>
+                  <button
+                    type="submit"
+                    className="w-full sm:w-[235px] h-[46px] bg-[#AF2638] rounded-[10px] flex items-center justify-center"
+                  >
+                    <span className="text-base lg:text-[18px] font-semibold font-roboto text-white">Find Verified Experts</span>
+                  </button>
+                </div>
+              )}
 
               {/* Terms and Privacy */}
               <div className="max-w-[808px]">

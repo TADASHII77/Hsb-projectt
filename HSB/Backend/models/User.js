@@ -16,6 +16,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  // Hashed password for authentication (optional for customers who haven't set one)
+  passwordHash: {
+    type: String,
+    select: false
+  },
   role: {
     type: String,
     enum: ['Customer', 'Technician', 'Admin'],

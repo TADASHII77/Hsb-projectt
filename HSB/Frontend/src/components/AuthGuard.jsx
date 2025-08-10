@@ -124,30 +124,26 @@ const AuthGuard = ({ children, requiredUserType, dashboardType }) => {
     setIsSubmitting(true);
 
     try {
-      // Mock login logic - in real app this would be an API call
       if (formData.email && formData.password) {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Mock successful login
-        if (requiredUserType === 'business') {
-          localStorage.setItem('userType', 'business');
-          localStorage.setItem('businessId', 'business_' + Date.now());
-          localStorage.setItem('businessName', 'Demo Business');
-          localStorage.setItem('businessEmail', formData.email);
-        } else {
-          localStorage.setItem('userType', 'customer');
-          localStorage.setItem('userId', 'user_' + Date.now());
-          localStorage.setItem('userName', 'Demo User');
-          localStorage.setItem('userEmail', formData.email);
+        const api = (await import('../services/api')).default;
+        const loginRes = await api.login({ email: formData.email, password: formData.password });
+        if (!loginRes.success) {
+          showAlert('error', 'Login Failed', loginRes.message || 'Invalid credentials');
+          setIsSubmitting(false);
+          return;
         }
-        
+
+        // Set session markers
+        const user = loginRes.data;
+        localStorage.setItem('userType', user.role === 'Technician' ? 'business' : 'customer');
+        localStorage.setItem('userEmail', user.email);
+        localStorage.setItem('userName', user.name);
+        localStorage.setItem('userId', user.id || `user_${Date.now()}`);
+
         showAlert('success', 'Login Successful!', 'Welcome back! Redirecting to your dashboard...');
-        
-        // Redirect after success
         setTimeout(() => {
-          window.location.reload(); // Force page reload to update auth state
-        }, 1500);
+          window.location.reload();
+        }, 1000);
       } else {
         showAlert('error', 'Login Failed', 'Please enter both email and password.');
       }

@@ -85,8 +85,7 @@ const UserDashboard = () => {
   });
 
   // Mock user ID - in real app this would come from authentication
-  const userId = localStorage.getItem('userId') || 'user123';
-  const userEmail = localStorage.getItem('userEmail') || 'user@example.com';
+  const userEmail = localStorage.getItem('userEmail') || '';
 
   useEffect(() => {
     fetchUserData();
@@ -117,29 +116,17 @@ const UserDashboard = () => {
   const fetchUserData = async () => {
     try {
       setIsLoading(true);
-      // Mock user data - in real app this would be an API call
-      const mockUserData = {
-        id: userId,
-        name: localStorage.getItem('userName') || 'John Doe',
-        email: userEmail,
-        phone: localStorage.getItem('userPhone') || '+1-234-567-8900',
-        address: {
-          street: '123 Main Street',
-          city: 'Delhi',
-          province: 'Delhi',
-          postalCode: '110001',
-          country: 'India'
-        },
-        joinDate: '2024-01-15',
-        preferences: {
-          notifications: {
-            email: true,
-            sms: false
-          },
-          serviceCategories: ['HVAC', 'Plumbing', 'Electrical']
-        }
-      };
-      setUserData(mockUserData);
+      if (!userEmail) {
+        showAlert('error', 'No session', 'Please login again.');
+        return;
+      }
+      const res = await apiService.getUserByEmail(userEmail);
+      const user = res?.data?.[0];
+      if (!user) {
+        showAlert('error', 'Not found', 'User not found.');
+        return;
+      }
+      setUserData(user);
     } catch (error) {
       console.error('Error fetching user data:', error);
       showAlert('error', 'Error', 'Failed to load user data');
@@ -150,46 +137,26 @@ const UserDashboard = () => {
 
   const fetchUserJobs = async () => {
     try {
-      // Mock job data - in real app this would be an API call
-      const mockJobs = [
-        {
-          id: 1,
-          service: 'HVAC Repair',
-          description: 'Air conditioning not working properly',
-          city: 'Delhi',
-          postalCode: '110001',
-          budget: '₹5000-₹8000',
-          status: 'open',
-          datePosted: '2024-01-20',
-          responses: 3
-        },
-        {
-          id: 2,
-          service: 'Plumbing',
-          description: 'Kitchen sink leaking',
-          city: 'Mumbai',
-          postalCode: '400001',
-          budget: '₹2000-₹3000',
-          status: 'in_progress',
-          datePosted: '2024-01-18',
-          responses: 5,
-          assignedTechnician: 'Mumbai Plumbing Experts'
-        },
-        {
-          id: 3,
-          service: 'Electrical',
-          description: 'Install ceiling fan in bedroom',
-          city: 'Delhi',
-          postalCode: '110002',
-          budget: '₹1500-₹2500',
-          status: 'completed',
-          datePosted: '2024-01-15',
-          responses: 7,
-          assignedTechnician: 'Delhi Electrical Services',
-          completedDate: '2024-01-17'
-        }
-      ];
-      setUserJobs(mockJobs);
+      if (!userEmail) return;
+      const res = await apiService.getJobsByUserEmail(userEmail);
+      if (res?.success) {
+        const normalized = (res.data || []).map(j => ({
+          id: j._id,
+          service: j.service,
+          description: j.description,
+          city: j.city,
+          postalCode: j.postalCode,
+          budget: j.budget,
+          status: j.status,
+          datePosted: (j.createdAt || '').split('T')[0],
+          responses: Array.isArray(j.quotes) ? j.quotes.length : 0,
+          assignedTechnician: j.assignedTechnician?.name,
+          completedDate: j.status === 'completed' ? (j.updatedAt || '').split('T')[0] : undefined,
+        }));
+        setUserJobs(normalized);
+      } else {
+        setUserJobs([]);
+      }
     } catch (error) {
       console.error('Error fetching user jobs:', error);
     }
@@ -216,15 +183,27 @@ const UserDashboard = () => {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      // Mock save - in real app this would be an API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Update localStorage
-      localStorage.setItem('userName', userData.name);
-      localStorage.setItem('userPhone', userData.phone);
-      
-      setEditMode(false);
-      showAlert('success', 'Profile Updated', 'Your profile has been updated successfully!');
+      if (!userData?._id) {
+        showAlert('error', 'Save Error', 'Cannot find user id.');
+        return;
+      }
+      const payload = {
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        address: userData.address,
+        preferences: userData.preferences,
+      };
+      const res = await apiService.updateUserById(userData._id, payload);
+      if (res?.success) {
+        setUserData(res.data);
+        localStorage.setItem('userName', res.data.name || userData.name);
+        localStorage.setItem('userPhone', res.data.phone || userData.phone);
+        setEditMode(false);
+        showAlert('success', 'Profile Updated', 'Your profile has been updated successfully!');
+      } else {
+        showAlert('error', 'Save Error', res?.message || 'Failed to update profile.');
+      }
     } catch (error) {
       console.error('Error saving user data:', error);
       showAlert('error', 'Save Error', 'Failed to update profile. Please try again.');

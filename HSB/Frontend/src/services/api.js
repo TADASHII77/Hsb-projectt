@@ -128,6 +128,20 @@ class ApiService {
     return this.fetchWithErrorHandling(`${this.baseURL}/admin/users`);
   }
 
+  // Convenience: fetch a single user by email using admin listing endpoint
+  async getUserByEmail(email) {
+    const query = new URLSearchParams({ search: email, limit: 1 }).toString();
+    return this.fetchWithErrorHandling(`${this.baseURL}/admin/users?${query}`);
+  }
+
+  // Update user by id
+  async updateUserById(id, payload) {
+    return this.fetchWithErrorHandling(`${this.baseURL}/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
   async exportTechnicians() {
     return this.fetchWithErrorHandling(`${this.baseURL}/admin/export/technicians`);
   }
@@ -143,6 +157,34 @@ class ApiService {
     return this.fetchWithErrorHandling(`${this.baseURL}/technicians/${technicianId}/quote`, {
       method: 'POST',
       body: JSON.stringify(requestData),
+    });
+  }
+
+  // Jobs endpoints for user
+  async getJobsByUserEmail(email) {
+    // Reuse GET /jobs with search filter if available; otherwise, fetch all and filter client-side.
+    // Backend currently doesn't expose filter by customer email, so we fetch all and filter.
+    const res = await this.get('/jobs');
+    if (!res?.success) return { success: false, data: [] };
+    const jobs = res.data || [];
+    return {
+      success: true,
+      data: jobs.filter(j => j?.customerInfo?.email?.toLowerCase() === email?.toLowerCase())
+    };
+  }
+
+  // Auth endpoints
+  async registerCustomer(payload) {
+    return this.fetchWithErrorHandling(`${this.baseURL}/auth/register-customer`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async login(payload) {
+    return this.fetchWithErrorHandling(`${this.baseURL}/auth/login`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
     });
   }
 }

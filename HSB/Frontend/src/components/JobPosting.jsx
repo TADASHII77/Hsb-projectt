@@ -20,7 +20,6 @@ const JobPosting = () => {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showCustomerForm, setShowCustomerForm] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value, type, files } = e.target;
@@ -42,59 +41,28 @@ const JobPosting = () => {
     }
   };
 
-  // Show contact info without triggering form submission/HTML5 validation
+  // Proceed to contact step page
   const handleContinue = () => {
-    // Basic lightweight checks; full required validation happens on final submit
     if (!formData.service || !formData.postalCode || !formData.city || !formData.description) {
       alert('Please fill in service, postal code, city, and description to continue.');
       return;
     }
-    setShowCustomerForm(true);
+    // Persist draft job details for next screen
+    localStorage.setItem('draftJob', JSON.stringify({
+      service: formData.service,
+      postalCode: formData.postalCode,
+      city: formData.city,
+      description: formData.description,
+      startTime: formData.startTime,
+      budget: formData.budget,
+      images: formData.images ? [formData.images.name] : []
+    }));
+    navigate('/expert-contact');
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (!showCustomerForm) {
-      setShowCustomerForm(true);
-      return;
-    }
-
-    setIsSubmitting(true);
-    
-    try {
-      const jobData = {
-        service: formData.service,
-        postalCode: formData.postalCode,
-        city: formData.city,
-        description: formData.description,
-        startTime: formData.startTime,
-        budget: formData.budget,
-        customerInfo: formData.customerInfo,
-        images: formData.images ? [formData.images.name] : [] // For now, just store filename
-      };
-
-      const response = await apiService.post('/jobs', jobData);
-      
-      if (response.success) {
-        // Store user information in localStorage for authentication
-        localStorage.setItem('userId', `user_${Date.now()}`);
-        localStorage.setItem('userName', formData.customerInfo.name);
-        localStorage.setItem('userEmail', formData.customerInfo.email);
-        localStorage.setItem('userPhone', formData.customerInfo.phone);
-        localStorage.setItem('userType', 'customer');
-        
-        alert('Job posted successfully! You will be contacted by verified experts soon.');
-        navigate('/expert-contact');
-      } else {
-        alert('Error posting job: ' + response.message);
-      }
-    } catch (error) {
-      console.error('Error submitting job:', error);
-      alert('Error posting job. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    handleContinue();
   };
 
   return (
@@ -241,88 +209,22 @@ const JobPosting = () => {
             </div>
           </div>
 
-          {/* Customer Information Form */}
-          {showCustomerForm && (
-            <div className="space-y-4 md:space-y-[22px] p-6 bg-gray-50 rounded-[10px]">
-              <h3 className="text-lg md:text-xl font-semibold text-black font-roboto mb-4">
-                Contact Information
-              </h3>
-              <p className="text-sm md:text-base text-gray-600 mb-4">
-                Please provide your contact information so verified experts can reach you.
-              </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-[25px]">
-                {/* Name */}
-                <div className="w-full h-[46px] bg-white border border-black rounded-[10px] flex items-center px-[12px]">
-                  <input
-                    type="text"
-                    name="customerInfo.name"
-                    value={formData.customerInfo.name}
-                    onChange={handleInputChange}
-                    placeholder="Your Full Name"
-                    className="w-full bg-transparent text-base md:text-[18px] font-light font-roboto text-black placeholder-black outline-none"
-                    required
-                  />
-                </div>
+          {/* Contact info moved to ExpertContactForm */}
 
-                {/* Email */}
-                <div className="w-full h-[46px] bg-white border border-black rounded-[10px] flex items-center px-[12px]">
-                  <input
-                    type="email"
-                    name="customerInfo.email"
-                    value={formData.customerInfo.email}
-                    onChange={handleInputChange}
-                    placeholder="Your Email Address"
-                    className="w-full bg-transparent text-base md:text-[18px] font-light font-roboto text-black placeholder-black outline-none"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Phone */}
-              <div className="w-full md:w-[310px] h-[46px] bg-white border border-black rounded-[10px] flex items-center px-[12px]">
-                <input
-                  type="tel"
-                  name="customerInfo.phone"
-                  value={formData.customerInfo.phone}
-                  onChange={handleInputChange}
-                  placeholder="Your Phone Number"
-                  className="w-full bg-transparent text-base md:text-[18px] font-light font-roboto text-black placeholder-black outline-none"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Submit / Continue Button */}
+          {/* Continue Button */}
           <div className="pt-6 md:pt-[35px]">
-            {!showCustomerForm ? (
-              <button
-                type="button"
-                onClick={handleContinue}
-                disabled={isSubmitting}
-                className={`w-full md:w-[235px] h-[46px] rounded-[10px] flex items-center justify-center ${
-                  isSubmitting 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-[#AF2638] hover:bg-red-700'
-                }`}
-              >
-                <span className="text-base md:text-[18px] font-semibold font-roboto text-white">Continue</span>
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`w-full md:w-[235px] h-[46px] rounded-[10px] flex items-center justify-center ${
-                  isSubmitting 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-[#AF2638] hover:bg-red-700'
-                }`}
-              >
-                <span className="text-base md:text-[18px] font-semibold font-roboto text-white">
-                  {isSubmitting ? 'Posting...' : 'Post Job'}
-                </span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleContinue}
+              disabled={isSubmitting}
+              className={`w-full md:w-[235px] h-[46px] rounded-[10px] flex items-center justify-center ${
+                isSubmitting 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-[#AF2638] hover:bg-red-700'
+              }`}
+            >
+              <span className="text-base md:text-[18px] font-semibold font-roboto text-white">Continue</span>
+            </button>
           </div>
         </form>
       </main>

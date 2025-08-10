@@ -7,6 +7,7 @@ import connectDB from './config/database.js';
 import technicianRoutes from './routes/technicians.js';
 import adminRoutes from './routes/admin.js';
 import jobRoutes from './routes/jobs.js';
+import authRoutes from './routes/auth.js';
 
 // Load environment variables
 dotenv.config();
@@ -38,6 +39,7 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use('/api/technicians', technicianRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/jobs', jobRoutes);
+app.use('/api/auth', authRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
