@@ -4,19 +4,18 @@ function normalizeBaseUrl(url) {
   return String(url).trim();
 }
 
-const RAW_BASE =
-  import.meta.env.VITE_API_URL ||
+// Force the correct API URL for production
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
   (import.meta.env.PROD ? 'https://hsb-projectt.vercel.app/api' : 'http://localhost:5000/api');
-
-const API_BASE_URL = normalizeBaseUrl(RAW_BASE);
 
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
     // Debug logging for production
-    if (import.meta.env.PROD) {
-      console.log('API Service initialized with baseURL:', this.baseURL);
-    }
+    console.log('Environment check:');
+    console.log('- import.meta.env.PROD:', import.meta.env.PROD);
+    console.log('- import.meta.env.VITE_API_URL:', import.meta.env.VITE_API_URL);
+    console.log('- Final baseURL:', this.baseURL);
   }
 
   async fetchWithErrorHandling(url, options = {}) {
