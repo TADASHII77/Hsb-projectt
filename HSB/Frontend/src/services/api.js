@@ -14,6 +14,10 @@ const API_BASE_URL = normalizeBaseUrl(RAW_BASE);
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
+    // Debug logging for production
+    if (import.meta.env.PROD) {
+      console.log('API Service initialized with baseURL:', this.baseURL);
+    }
   }
 
   async fetchWithErrorHandling(url, options = {}) {
@@ -72,8 +76,9 @@ class ApiService {
 
   // Get all technicians
   async getTechnicians() {
-   
-    return this.fetchWithErrorHandling(`${this.baseURL}/technicians`);
+    const url = `${this.baseURL}/technicians`;
+    console.log('getTechnicians calling URL:', url);
+    return this.fetchWithErrorHandling(url);
   }
 
   // Get technician by ID
