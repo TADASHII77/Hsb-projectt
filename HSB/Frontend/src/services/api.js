@@ -4,18 +4,13 @@ function normalizeBaseUrl(url) {
   return String(url).trim();
 }
 
-// Force the correct API URL for production
-const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.PROD ? 'https://hsb-projectt.vercel.app/api' : 'http://localhost:5000/api');
+// Use local development API URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
-    // Debug logging for production
-    console.log('Environment check:');
-    console.log('- import.meta.env.PROD:', import.meta.env.PROD);
-    console.log('- import.meta.env.VITE_API_URL:', import.meta.env.VITE_API_URL);
-    console.log('- Final baseURL:', this.baseURL);
+    console.log('API Service initialized with baseURL:', this.baseURL);
   }
 
   async fetchWithErrorHandling(url, options = {}) {
@@ -74,9 +69,7 @@ class ApiService {
 
   // Get all technicians
   async getTechnicians() {
-    const url = `${this.baseURL}/technicians`;
-    console.log('getTechnicians calling URL:', url);
-    return this.fetchWithErrorHandling(url);
+    return this.fetchWithErrorHandling(`${this.baseURL}/technicians`);
   }
 
   // Get technician by ID
