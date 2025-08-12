@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "installCommand": "npm --prefix HSB/Backend install && npm --prefix HSB/Frontend install",
+  "builds": [
+    {
+      "src": "HSB/Backend/serverless.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "HSB/Backend/**"
+        ]
+      }
+    },
+    {
+      "src": "HSB/Frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "HSB/Backend/serverless.js" },
+    { "handle": "filesystem" },
+    { "src": "/.*", "dest": "/index.html" }
+  ],
+  "functions": {
+    "HSB/Backend/serverless.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
+}
+
+

@@ -3,25 +3,35 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+let isConnected = false; // serverless connection cache
+
 const connectDB = async () => {
+  if (isConnected) {
+    return;
+  }
+
   try {
-    // Default to local MongoDB if no environment variable is set
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/hsb_database';
-    
-    console.log('Attempting to connect to MongoDB...');
-    console.log('MongoDB URI:', mongoURI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@')); // Hide credentials in logs
-    
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Attempting to connect to MongoDB...');
+      console.log('MongoDB URI:', mongoURI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@'));
+    }
+
     const conn = await mongoose.connect(mongoURI, {
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-      socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     });
 
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    console.log(`📊 Database: ${conn.connection.name}`);
+    isConnected = !!conn.connections?.[0]?.readyState;
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+      console.log(`📊 Database: ${conn.connection.name}`);
+    }
   } catch (error) {
     console.error('❌ Error connecting to MongoDB:', error.message);
-    
-    // Provide helpful error messages
+
     if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
       console.log('\n🔧 Troubleshooting Tips:');
       console.log('1. Make sure MongoDB is installed and running locally');
@@ -29,8 +39,12 @@ const connectDB = async () => {
       console.log('3. If using Atlas, check your IP whitelist settings');
       console.log('4. Run "mongod" to start local MongoDB server\n');
     }
-    
-    // Don't exit in development, use fallback
+
+    // In serverless environments, do not exit process; bubble up error
+    if (process.env.VERCEL) {
+      throw error;
+    }
+
     if (process.env.NODE_ENV === 'production') {
       process.exit(1);
     } else {
@@ -39,4 +53,4 @@ const connectDB = async () => {
   }
 };
 
-export default connectDB; 
+export default connectDB;
