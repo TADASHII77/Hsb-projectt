@@ -7,7 +7,7 @@ function normalizeBaseUrl(url) {
 
 const RAW_BASE =
   import.meta.env.VITE_API_URL ||
-  (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
+  (import.meta.env.PROD ? 'https://hsb-projectt.vercel.app/api' : 'http://localhost:5000/api');
 
 const API_BASE_URL = normalizeBaseUrl(RAW_BASE);
 

@@ -32,13 +32,22 @@ function resolveCorsOrigin() {
     .split(',')
     .map(o => o.trim())
     .filter(Boolean);
+  
   if (list.length === 0) {
-    // Fallback: allow localhost during dev
-    return [
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'http://127.0.0.1:5173'
-    ];
+    // In production, allow common Vercel patterns + localhost for dev
+    if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+      return [
+        'https://frontend-two-blush-25.vercel.app',
+        /^https:\/\/.*\.vercel\.app$/
+      ];
+    } else {
+      // Development fallback
+      return [
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173'
+      ];
+    }
   }
   return list;
 }
