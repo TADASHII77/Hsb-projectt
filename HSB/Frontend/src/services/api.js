@@ -1,8 +1,7 @@
 function normalizeBaseUrl(url) {
   if (!url) return '';
-  // Trim whitespace and trailing slashes
-  const trimmed = String(url).trim();
-  return trimmed.replace(/\/+$/, '');
+  // Trim whitespace only, preserve the path
+  return String(url).trim();
 }
 
 const RAW_BASE =
