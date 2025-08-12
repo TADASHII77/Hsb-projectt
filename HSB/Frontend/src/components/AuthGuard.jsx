@@ -61,7 +61,7 @@ const Alert = ({ type, title, message, onClose, isVisible }) => {
 
 const AuthGuard = ({ children, requiredUserType, dashboardType }) => {
   const navigate = useNavigate();
-  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [showLoginForm, setShowLoginForm] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -79,6 +79,14 @@ const AuthGuard = ({ children, requiredUserType, dashboardType }) => {
   // Check authentication
   const userType = localStorage.getItem('userType');
   const isAuthenticated = userType === requiredUserType;
+
+  const [activeTab, setActiveTab] = useState('homeowner');
+
+  // Styles for the toggle divs
+  const baseDivStyles = "flex-1 py-2 px-1 text-center font-medium rounded-md cursor-pointer transition-colors text-sm sm:text-base";
+  const activeDivStyles = "bg-[#213A59] text-white";
+  const inactiveDivStyles = "bg-gray-200 text-black hover:bg-gray-300";
+
 
   // Alert helper functions
   const showAlert = (type, title, message) => {
@@ -156,7 +164,7 @@ const AuthGuard = ({ children, requiredUserType, dashboardType }) => {
   };
 
   const handleRegisterRedirect = () => {
-    if (requiredUserType === 'business') {
+    if (activeTab === 'business') {
       navigate('/business');
     } else {
       navigate('/job');
@@ -176,12 +184,12 @@ const AuthGuard = ({ children, requiredUserType, dashboardType }) => {
           isVisible={alert.isVisible}
         />
         
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 sm:p-8" >
             <div className="text-center">
               <div className="mb-6">
                 <svg className="mx-auto h-12 w-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
               
@@ -239,21 +247,44 @@ const AuthGuard = ({ children, requiredUserType, dashboardType }) => {
         isVisible={alert.isVisible}
       />
       
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-          <div className="text-center mb-6">
+      <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row gap-6 lg:gap-10 items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6 sm:p-8" style={{border: '1px solid #000000'}} >
+          <div className="text-left mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Login to {dashboardType}
+              Login to HSB
             </h2>
             <p className="text-gray-600">
-              Enter your credentials to access your dashboard
+              Enter your email and password to continue
             </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
+           
+              {/* Updated Toggle Divs */}
+      <div className="flex gap-0 my-6">
+        <div
+            onClick={() => setActiveTab('homeowner')}
+            className={`${baseDivStyles} ${activeTab === 'homeowner' ? activeDivStyles : inactiveDivStyles}`}
+            role="button"
+            tabIndex={0}
+            onKeyPress={(e) => e.key === 'Enter' && setActiveTab('homeowner')}
+        >
+            login as home owner
+        </div>
+        <div
+            onClick={() => setActiveTab('business')}
+            className={`${baseDivStyles} ${activeTab === 'business' ? activeDivStyles : inactiveDivStyles}`}
+            role="button"
+            tabIndex={0}
+            onKeyPress={(e) => e.key === 'Enter' && setActiveTab('business')}
+        >
+            login as business
+        </div>
+      </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address
+                Your registered email id
               </label>
               <input
                 type="email"
@@ -263,13 +294,13 @@ const AuthGuard = ({ children, requiredUserType, dashboardType }) => {
                 onChange={handleInputChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#AF2638] focus:border-transparent"
-                placeholder="Enter your email"
+                placeholder="E.g. johndoe@gmail.com"
               />
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+                Your HSB account password
               </label>
               <input
                 type="password"
@@ -279,7 +310,7 @@ const AuthGuard = ({ children, requiredUserType, dashboardType }) => {
                 onChange={handleInputChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#AF2638] focus:border-transparent"
-                placeholder="Enter your password"
+                placeholder="E.g. password"
               />
             </div>
 
@@ -287,7 +318,7 @@ const AuthGuard = ({ children, requiredUserType, dashboardType }) => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`w-full font-medium py-2 px-4 rounded-md transition-colors duration-200 ${
+                className={`w-28 font-medium py-2 px-4 rounded-md transition-colors duration-200 ${
                   isSubmitting
                     ? 'bg-gray-400 cursor-not-allowed text-gray-200'
                     : 'bg-[#AF2638] hover:bg-red-700 text-white'
@@ -296,45 +327,70 @@ const AuthGuard = ({ children, requiredUserType, dashboardType }) => {
                 {isSubmitting ? 'Logging in...' : 'Login'}
               </button>
 
-              <div className="text-center">
-                <span className="text-gray-500 text-sm">Don't have an account? </span>
-                <button
-                  type="button"
-                  onClick={handleRegisterRedirect}
-                  className="text-[#AF2638] hover:text-red-700 text-sm font-medium"
-                >
-                  {requiredUserType === 'business' ? 'Register Your Business' : 'Post a Job to Sign Up'}
-                </button>
+              <div className="text-left">
+                <span className="text-gray-500 text-sm">Forgot a password? Get a password resent request </span>
+              
               </div>
 
-              <div className="flex space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setShowLoginForm(false)}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors duration-200"
-                >
-                  Back
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/')}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors duration-200"
-                >
-                  Home
-                </button>
-              </div>
+             
             </div>
           </form>
 
-          {/* Demo credentials info */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-md">
-            <h4 className="text-sm font-medium text-blue-800 mb-2">Demo Login</h4>
-            <p className="text-xs text-blue-600">
-              For demo purposes, enter any email and password to login. 
-              In production, this would validate against real user credentials.
-            </p>
-          </div>
+    
         </div>
+
+        <div className='flex flex-col gap-6 w-full max-w-md lg:w-[540px] lg:max-w-none'>
+      {/* what our users say */}
+          <div className="bg-white border w-full lg:h-[247px] lg:w-[500px] border-gray-300 rounded-lg shadow-sm p-6 sm:p-8" style={{border: '1px solid #000000'}}>
+      <h3 className="text-2xl font-bold text-gray-900">What Our Users Say:</h3>
+      <blockquote className="mt-4">
+        <p className="text-gray-600 italic">
+          {activeTab === 'business' 
+            ? '"HSB has transformed my business! I get quality leads daily and the platform makes managing jobs so much easier."'
+            : '"HSB made finding a reliable contractor so easy! I booked a plumber within minutes, and the work was done the same day."'
+          }
+        </p>
+        <footer className="mt-4 text-gray-800 font-medium">
+          {activeTab === 'business' ? '~ Sarah Johnson, Plumbing Pro' : '~ Raymond Dawson'}
+        </footer>
+      </blockquote>
+    </div>
+        {/**New to Hsb */}
+    <div className="bg-slate-800 w-full lg:h-[247px] lg:w-[500px] text-white rounded-lg shadow-sm p-3 sm:p-6" style={{border: '1px solid #000000'}}>
+      <h3 className="text-2xl font-bold">New to HSB</h3>
+      <p className="mt-2 text-slate-300">
+        {activeTab === 'business' 
+          ? 'Join our network of trusted professionals.'
+          : 'Create an account to get started.'
+        }
+      </p>
+      <ul className="mt-1 space-y-2 list-disc list-inside text-slate-300">
+        {activeTab === 'business' ? (
+          <>
+            <li>Get quality leads</li>
+            <li>Manage your business</li>
+            <li>Build your reputation</li>
+          </>
+        ) : (
+          <>
+            <li>Post service requests</li>
+            <li>Receive quotes</li>
+            <li>Track and manage all your job</li>
+          </>
+        )}
+      </ul>
+      <div className="mt-2">
+        <button
+         onClick={handleRegisterRedirect}
+          type="button"
+          className="w-auto py-2 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          {activeTab === 'business' ? 'Register Your Business' : 'Post A Free Job'}
+        </button>
+      </div>
+    </div>
+
+    </div>
       </div>
     </>
   );

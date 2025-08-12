@@ -13,8 +13,10 @@ const BusinessDashboard = () => {
   const [quoteRequests, setQuoteRequests] = useState([]);
   const [editMode, setEditMode] = useState(false);
 
-  // Mock business ID - in real app this would come from authentication
-  const businessId = 1753774440003;
+  // Resolve current business identity from session
+  const userEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null; // owner's personal email
+  const storedBusinessId = typeof window !== 'undefined' ? localStorage.getItem('businessId') : null;
+  const storedBusinessEmail = typeof window !== 'undefined' ? localStorage.getItem('businessEmail') : null;
 
   useEffect(() => {
     fetchBusinessData();
@@ -24,9 +26,19 @@ const BusinessDashboard = () => {
   const fetchBusinessData = async () => {
     try {
       setIsLoading(true);
-      const response = await apiService.get(`/technicians/${businessId}`);
-      if (response.success) {
-        setBusinessData(response.data);
+      let res = null;
+      if (storedBusinessId) {
+        res = await apiService.getTechnicianById(storedBusinessId);
+      } else if (userEmail) {
+        res = await apiService.getTechnicianByOwnerEmail(userEmail);
+      } else if (storedBusinessEmail) {
+        res = await apiService.getTechnicianByBusinessEmail(storedBusinessEmail);
+      }
+
+      if (res?.success) {
+        setBusinessData(res.data);
+      } else {
+        console.warn('No technician found for current session.');
       }
     } catch (error) {
       console.error('Error fetching business data:', error);
@@ -65,7 +77,24 @@ const BusinessDashboard = () => {
   const handleSaveProfile = async () => {
     try {
       setIsSaving(true);
-      const response = await apiService.put(`/technicians/${businessId}`, businessData);
+      if (!businessData?.technicianId) {
+        throw new Error('Missing technicianId for update');
+      }
+
+      const updatePayload = {
+        name: businessData.name,
+        businessEmail: businessData.businessEmail,
+        businessPhone: businessData.businessPhone,
+        businessWebsite: businessData.businessWebsite,
+        businessDescription: businessData.businessDescription,
+        addressDetails: businessData.addressDetails,
+        businessHours: businessData.businessHours,
+        acceptedPayments: businessData.acceptedPayments,
+        providesInsurance: businessData.providesInsurance,
+        insuranceNumber: businessData.insuranceNumber,
+      };
+
+      const response = await apiService.put(`/technicians/${businessData.technicianId}`, updatePayload);
       if (response.success) {
         setEditMode(false);
         alert('Profile updated successfully!');

@@ -23,6 +23,46 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Find technician by owner's personal email
+router.get('/by-owner-email', async (req, res) => {
+  try {
+    const email = (req.query.email || '').toLowerCase().trim();
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email query param is required' });
+    }
+
+    const technician = await Technician.findOne({ 'ownerDetails.personalEmail': email });
+    if (!technician) {
+      return res.status(404).json({ success: false, message: 'Technician not found for owner email' });
+    }
+
+    res.json({ success: true, data: technician });
+  } catch (error) {
+    console.error('Error finding technician by owner email:', error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+});
+
+// Find technician by business email
+router.get('/by-business-email', async (req, res) => {
+  try {
+    const email = (req.query.email || '').toLowerCase().trim();
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email query param is required' });
+    }
+
+    const technician = await Technician.findOne({ businessEmail: email });
+    if (!technician) {
+      return res.status(404).json({ success: false, message: 'Technician not found for business email' });
+    }
+
+    res.json({ success: true, data: technician });
+  } catch (error) {
+    console.error('Error finding technician by business email:', error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+});
+
 // Get technician by ID
 router.get('/:id', async (req, res) => {
   try {

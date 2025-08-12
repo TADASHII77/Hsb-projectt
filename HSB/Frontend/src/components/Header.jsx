@@ -176,8 +176,8 @@ const Header = ({ isMenuOpen, toggleMenu, userLocation, setUserLocation }) => {
                       </>
                     ) : (
                       <>
-                        <a href="/job" className="block py-2 px-3 text-blue-600 hover:bg-blue-50 rounded transition-colors text-sm">Login as User</a>
-                        <a href="/business" className="block py-2 px-3 text-green-600 hover:bg-green-50 rounded transition-colors text-sm">Login as Business</a>
+                        <a href="/user-dashboard" className="block py-2 px-3 text-blue-600 hover:bg-blue-50 rounded transition-colors text-sm">Login as User</a>
+                        <a href="/business-dashboard" className="block py-2 px-3 text-green-600 hover:bg-green-50 rounded transition-colors text-sm">Login as Business</a>
                       </>
                     )}
                     <a href="#" className="block py-2 px-3 text-gray-700 hover:bg-gray-100 rounded transition-colors text-sm">Support</a>

@@ -70,6 +70,16 @@ class ApiService {
     return this.fetchWithErrorHandling(`${this.baseURL}/technicians/${id}`);
   }
 
+  async getTechnicianByOwnerEmail(email) {
+    const q = encodeURIComponent(email || '');
+    return this.fetchWithErrorHandling(`${this.baseURL}/technicians/by-owner-email?email=${q}`);
+  }
+
+  async getTechnicianByBusinessEmail(email) {
+    const q = encodeURIComponent(email || '');
+    return this.fetchWithErrorHandling(`${this.baseURL}/technicians/by-business-email?email=${q}`);
+  }
+
   // Search technicians
   async searchTechnicians(query) {
     return this.fetchWithErrorHandling(`${this.baseURL}/technicians/search/${encodeURIComponent(query)}`);
