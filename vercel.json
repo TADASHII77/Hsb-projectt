@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "installCommand": "npm --prefix HSB/Backend install && npm --prefix HSB/Frontend install",
   "builds": [
     {
       "src": "HSB/Backend/serverless.js",
