@@ -1,6 +1,15 @@
-const API_BASE_URL =
+function normalizeBaseUrl(url) {
+  if (!url) return '';
+  // Trim whitespace and trailing slashes
+  const trimmed = String(url).trim();
+  return trimmed.replace(/\/+$/, '');
+}
+
+const RAW_BASE =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
+
+const API_BASE_URL = normalizeBaseUrl(RAW_BASE);
 
 class ApiService {
   constructor() {
