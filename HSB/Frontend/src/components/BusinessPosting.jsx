@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
+import { generateAndSendOtp, verifyOtp, clearOtp, getResendRemainingMs, formatSeconds } from '../services/otp';
 
 // Beautiful Alert Component
 const Alert = ({ type, title, message, onClose, isVisible }) => {
@@ -70,6 +71,10 @@ const BusinessPosting = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1); // 1 = basic info, 2 = services
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [resendRemainingMs, setResendRemainingMs] = useState(0);
   const [imagePreview, setImagePreview] = useState([]);
   const [logoPreview, setLogoPreview] = useState(null);
   
@@ -86,6 +91,8 @@ const BusinessPosting = () => {
     lastName: '',
     personalPhone: '',
     personalEmail: '',
+    verificationCode: '',
+    personalPassword: '',
     businessName: '',
     businessPhone: '',
     businessEmail: '',
@@ -139,6 +146,49 @@ const BusinessPosting = () => {
   const hideAlert = () => {
     setAlert(prev => ({ ...prev, isVisible: false }));
   };
+
+  // OTP helpers (owner phone)
+  const handleSendOtp = () => {
+    if (!formData.personalPhone) {
+      showAlert('error', 'Phone Required', 'Enter your phone number.');
+      return;
+    }
+    try {
+      setIsSendingCode(true);
+      const { code } = generateAndSendOtp(formData.personalPhone);
+      // eslint-disable-next-line no-console
+      console.log('[OTP] Business phone code:', code);
+      showAlert('success', 'OTP Sent', 'Verification code sent to your phone.');
+      setResendRemainingMs(getResendRemainingMs(formData.personalPhone));
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
+  const handleVerifyOtp = () => {
+    if (!formData.personalPhone || !formData.verificationCode) {
+      showAlert('error', 'Code Required', 'Enter the verification code.');
+      return;
+    }
+    setIsVerifying(true);
+    const result = verifyOtp(formData.personalPhone, formData.verificationCode);
+    if (result.ok) {
+      setOtpVerified(true);
+      clearOtp(formData.personalPhone);
+      showAlert('success', 'Verified', 'Phone verified. Please set your password.');
+    } else {
+      const reason = result.reason === 'EXPIRED' ? 'Code expired.' : result.reason === 'MISMATCH' ? 'Incorrect code.' : 'Invalid code.';
+      showAlert('error', 'Invalid Code', reason);
+    }
+    setIsVerifying(false);
+  };
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (formData.personalPhone) setResendRemainingMs(getResendRemainingMs(formData.personalPhone));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [formData.personalPhone]);
 
   const handleInputChange = (e) => {
     const { name, value, type, files, checked } = e.target;
@@ -327,28 +377,51 @@ const BusinessPosting = () => {
         }
       };
 
+      // Upload images to Cloudinary first
+      let logoUrl = null; let workUrls = [];
+      if (formData.logoFile) {
+        const up = await apiService.uploadFile(formData.logoFile);
+        if (up.success) logoUrl = up.url;
+      }
+      if (formData.workPhotos && formData.workPhotos.length) {
+        for (const f of formData.workPhotos) {
+          const up = await apiService.uploadFile(f);
+          if (up.success) workUrls.push(up.url);
+        }
+      }
+
       // Submit technician registration
       console.log('Submitting technician data:', technicianData);
-      const techResponse = await apiService.post('/technicians', technicianData);
+      const techResponse = await apiService.post('/technicians', {
+        ...technicianData,
+        logo: logoUrl,
+        workPhotos: workUrls,
+      });
       console.log('Technician response:', techResponse);
       
       if (techResponse.success) {
         // Submit user registration
         console.log('Submitting user data:', userData);
-        const userResponse = await apiService.post('/admin/users', userData);
-        console.log('User response:', userResponse);
-        
-        if (userResponse.success) {
+        try {
+          if (otpVerified && formData.personalEmail && formData.personalPassword) {
+            await apiService.registerTechnician({
+              name: `${formData.firstName} ${formData.lastName}`.trim() || formData.businessName,
+              email: formData.personalEmail,
+              phone: formData.personalPhone,
+              password: formData.personalPassword,
+            });
+          } else {
+            await apiService.post('/admin/users', userData);
+          }
           // Store business information in localStorage for authentication
           localStorage.setItem('businessId', technicianData.technicianId);
           localStorage.setItem('businessName', technicianData.name);
           localStorage.setItem('businessEmail', technicianData.businessEmail);
           localStorage.setItem('userType', 'business');
-          
           showAlert('success', 'Registration Successful!', 'Your business registration has been submitted successfully! Redirecting to your dashboard...');
           setTimeout(() => navigate('/business-dashboard'), 3000);
-        } else {
-          showAlert('error', 'User Profile Error', userResponse.message || 'Error creating user profile. Please try again.');
+        } catch (e) {
+          showAlert('error', 'User Profile Error', e?.message || 'Error creating user profile. Please try again.');
         }
       } else {
         // Handle specific error types
@@ -422,32 +495,7 @@ const BusinessPosting = () => {
               </div>
             </div>
 
-            {/* Your Contact Details */}
-            <div>
-              <p className="text-base lg:text-[18px] font-roboto text-black mb-4 lg:mb-[22px]">Your Contact Details</p>
-              <div className="flex flex-col sm:flex-row gap-4 lg:gap-[25px]">
-                <div className="w-full sm:w-[310px] h-[46px] bg-white border border-black rounded-[10px] flex items-center px-[12px]">
-                  <input
-                    type="tel"
-                    name="personalPhone"
-                    value={formData.personalPhone}
-                    onChange={handleInputChange}
-                    placeholder="Phone Number"
-                    className="w-full bg-transparent text-base lg:text-[18px] font-light font-roboto text-black placeholder-black outline-none"
-                  />
-                </div>
-                <div className="w-full sm:w-[310px] h-[46px] bg-white border border-black rounded-[10px] flex items-center px-[12px]">
-                  <input
-                    type="email"
-                    name="personalEmail"
-                    value={formData.personalEmail}
-                    onChange={handleInputChange}
-                    placeholder="Email"
-                    className="w-full bg-transparent text-base lg:text-[18px] font-light font-roboto text-black placeholder-black outline-none"
-                  />
-                </div>
-              </div>
-            </div>
+         
 
             {/* Your Business Details */}
             <div>
@@ -920,6 +968,64 @@ const BusinessPosting = () => {
                   placeholder="Google maps profile link"
                   className="w-full bg-transparent text-base lg:text-[18px] font-light font-roboto text-black placeholder-black outline-none"
                 />
+              </div>
+            </div>
+               {/* Your Contact Details */}
+               <div>
+              <p className="text-base lg:text-[18px] font-roboto text-black mb-4 lg:mb-[22px]">Your Contact Details</p>
+              <div className="flex flex-col sm:flex-row gap-4 lg:gap-[25px]">
+                <div className="w-full sm:w-[310px] h-[46px] bg-white border border-black rounded-[10px] flex items-center px-[12px]">
+                  <input
+                    type="tel"
+                    name="personalPhone"
+                    value={formData.personalPhone}
+                    onChange={handleInputChange}
+                    placeholder="Phone Number"
+                    className="w-full bg-transparent text-base lg:text-[18px] font-light font-roboto text-black placeholder-black outline-none"
+                  />
+                </div>
+                <div className="w-full sm:w-[310px] h-[46px] bg-white border border-black rounded-[10px] flex items-center px-[12px]">
+                  <input
+                    type="email"
+                    name="personalEmail"
+                    value={formData.personalEmail}
+                    onChange={handleInputChange}
+                    placeholder="Email"
+                    className="w-full bg-transparent text-base lg:text-[18px] font-light font-roboto text-black placeholder-black outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* OTP + Password */}
+              <div className="mt-3 mb-3 space-y-3">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button type="button" onClick={handleSendOtp} disabled={isSendingCode || resendRemainingMs > 0} className={`px-3 py-2 rounded-md border ${resendRemainingMs>0 ? 'text-gray-400 border-gray-300' : 'text-[#AF2638] border-[#AF2638]'}`}>
+                    {resendRemainingMs>0 ? `Resend in ${formatSeconds(resendRemainingMs)}s` : 'Send OTP'}
+                  </button>
+                  <div className="w-full sm:w-[310px] h-[46px] bg-white border border-black rounded-[10px] flex items-center px-[12px]">
+                    <input
+                      type="text"
+                      name="verificationCode"
+                      value={formData.verificationCode}
+                      onChange={handleInputChange}
+                      placeholder="OTP Code"
+                      className="w-full bg-transparent text-base lg:text-[18px] font-light font-roboto text-black placeholder-black outline-none"
+                    />
+                  </div>
+                  <button type="button" onClick={handleVerifyOtp} disabled={isVerifying} className={`px-3 py-2 rounded-md text-white ${isVerifying ? 'bg-gray-400' : 'bg-[#AF2638] hover:bg-red-700'}`}>Verify</button>
+                </div>
+                {otpVerified && (
+                  <div className="w-full sm:w-[310px] h-[46px] bg-white border border-black rounded-[10px] flex items-center px-[12px]">
+                    <input
+                      type="password"
+                      name="personalPassword"
+                      value={formData.personalPassword}
+                      onChange={handleInputChange}
+                      placeholder="Set Password"
+                      className="w-full bg-transparent text-base lg:text-[18px] font-light font-roboto text-black placeholder-black outline-none"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

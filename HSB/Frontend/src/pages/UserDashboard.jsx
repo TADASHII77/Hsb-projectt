@@ -659,7 +659,7 @@ const UserDashboard = () => {
           </div>
         </div>
       </div>
-    </AuthGuard>
+      </AuthGuard>
   );
 };
 

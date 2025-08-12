@@ -1,9 +1,32 @@
 import express from 'express';
 import Technician from '../models/Technician.js';
 import User from '../models/User.js';
+import cloudinary from '../services/cloudinary.js';
+import multer from 'multer';
+import streamifier from 'streamifier';
 import Job from '../models/Job.js';
 
 const router = express.Router();
+const upload = multer();
+
+// Upload to Cloudinary (multipart/form-data)
+router.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+    const streamUpload = () => new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream({ folder: 'hsb' }, (error, result) => {
+        if (result) resolve(result);
+        else reject(error);
+      });
+      streamifier.createReadStream(req.file.buffer).pipe(stream);
+    });
+    const result = await streamUpload();
+    return res.json({ success: true, url: result.secure_url, public_id: result.public_id });
+  } catch (err) {
+    console.error('Cloudinary upload error:', err);
+    return res.status(500).json({ success: false, message: 'Upload failed' });
+  }
+});
 
 // Middleware for admin authentication (placeholder)
 const authenticateAdmin = (req, res, next) => {

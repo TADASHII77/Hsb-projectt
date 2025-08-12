@@ -49,12 +49,12 @@ const JobPosting = () => {
     }
     // Persist draft job details for next screen
     localStorage.setItem('draftJob', JSON.stringify({
-      service: formData.service,
-      postalCode: formData.postalCode,
-      city: formData.city,
-      description: formData.description,
-      startTime: formData.startTime,
-      budget: formData.budget,
+        service: formData.service,
+        postalCode: formData.postalCode,
+        city: formData.city,
+        description: formData.description,
+        startTime: formData.startTime,
+        budget: formData.budget,
       images: formData.images ? [formData.images.name] : []
     }));
     navigate('/expert-contact');

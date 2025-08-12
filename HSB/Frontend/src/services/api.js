@@ -146,6 +146,17 @@ class ApiService {
     return this.fetchWithErrorHandling(`${this.baseURL}/admin/export/technicians`);
   }
 
+  async uploadFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${this.baseURL}/admin/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) throw new Error('Upload failed');
+    return res.json();
+  }
+
   // Request quote from technician
   async requestQuote(technicianId, customerData) {
     // Transform frontend data format to backend expected format
@@ -176,6 +187,13 @@ class ApiService {
   // Auth endpoints
   async registerCustomer(payload) {
     return this.fetchWithErrorHandling(`${this.baseURL}/auth/register-customer`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async registerTechnician(payload) {
+    return this.fetchWithErrorHandling(`${this.baseURL}/auth/register-technician`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
