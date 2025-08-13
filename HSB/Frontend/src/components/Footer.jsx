@@ -3,7 +3,7 @@ import React from 'react';
 const Footer = () => {
   return (
     <footer className="bg-[#213A59] text-white pt-8 mt-auto">
-      <div className="max-w-7xl mx-auto mb-8 px-4">
+      <div className="max-w-7xl mx-auto mb-8 ">
         <h4 className="mb-4 text-white font-roboto font-bold text-[30px] hidden sm:block">Home Service Bureau</h4>
         
         {/* Mobile Layout */}
@@ -152,7 +152,7 @@ const Footer = () => {
       </div>
       
       {/* Desktop Bottom Section */}
-      <div className="hidden sm:flex bg-white px-10 border-t border-gray-600 py-6 justify-between items-center">
+      <div className="hidden sm:flex bg-white px-16 border-t border-gray-600 py-6 justify-between items-center">
         <div className="flex space-x-4">
           <a href="#" className="text-[#213A59] hover:text-gray-600">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">

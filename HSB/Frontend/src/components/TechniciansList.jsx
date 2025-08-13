@@ -681,7 +681,7 @@ const TechniciansList = ({ searchFilters, updateSearchFilters }) => {
         {/* Other Technicians Section */}
         {otherTechnicians.length > 0 && (
           <>
-            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+            <div className="flex items-center gap-2 mb-3 sm:mb-4 mt-2">
                           <div className="w-6 h-8 sm:w-8 sm:h-10">
               <img src="/LogoIcon1.png" alt='logoicon' />
             </div>

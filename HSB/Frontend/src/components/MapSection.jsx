@@ -127,7 +127,7 @@ const MapSection = ({ searchFilters, onSearch, updateSearchFilters }) => {
       <div className="mx-auto">
         {/* Search Bar - Mobile Responsive */}
         <div className="bg-[#213A59] p-3 sm:p-4 rounded-lg border">
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <div className="flex flex-col gap-14 sm:flex-row sm:justify-center">
             <div className="relative flex-1 sm:flex-none">
               <input
                 type="text"
@@ -210,7 +210,7 @@ const MapSection = ({ searchFilters, onSearch, updateSearchFilters }) => {
         </div>
 
         {/* Map Container - Mobile responsive */}
-        <div className="rounded-lg overflow-hidden border border-gray-300 shadow mt-4" style={{ height: '250px' }}>
+        <div className="rounded-lg overflow-hidden border border-gray-300 shadow " style={{ height: '400px' }}>
           <iframe
             title={`${job || 'HVAC Technicians'} in ${city || searchFilters.city || 'Delhi'}`}
             width="100%"
@@ -226,7 +226,7 @@ const MapSection = ({ searchFilters, onSearch, updateSearchFilters }) => {
         
         {/* Search Results Summary - Mobile responsive */}
         {(searchFilters.job || searchFilters.city) && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+          <div className=" p-3 bg-blue-50 rounded-lg">
             <p className="text-xs sm:text-sm text-gray-700">
               Searching for: <span className="font-medium">{searchFilters.job || 'HVAC Services'}</span> 
               {' '}in <span className="font-medium">{searchFilters.city || 'Delhi'}</span>

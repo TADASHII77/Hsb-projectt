@@ -426,11 +426,11 @@ const TechnicianReview = () => {
           <div className="relative z-10 flex items-end h-full px-48 pb-12">
             <div className="flex items-end gap-8 w-full">
               {/* Company Logo */}
-              <div className="w-60 h-60 bg-white rounded-lg shadow-lg flex items-center justify-center flex-shrink-0 p-4">
+              <div className="w-60 h-60 bg-white rounded-lg shadow-lg flex items-center justify-center flex-shrink-0 ">
                 <img 
                   src={technician.logo || "/company-logo.png"} 
                   alt="Company Logo"
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     e.target.src = "/company-logo.png";
                   }}
