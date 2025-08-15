@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { showSuccess } from '../utils/alert';
 
 const Header = ({ isMenuOpen, toggleMenu, userLocation, setUserLocation }) => {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
@@ -22,6 +23,29 @@ const Header = ({ isMenuOpen, toggleMenu, userLocation, setUserLocation }) => {
   const handleLocationChange = (newLocation) => {
     setUserLocation(newLocation);
     setShowLocationDropdown(false);
+  };
+
+  const handleLogout = () => {
+    // Clear all user session data
+    localStorage.removeItem('userType');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userPhone');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('businessName');
+    localStorage.removeItem('businessId');
+    localStorage.removeItem('businessEmail');
+    
+    // Show success message
+    showSuccess('You have been successfully logged out.', 'Logged Out');
+    
+    // Close menu
+    toggleMenu();
+    
+    // Reload page to update UI
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
   };
 
   return (
@@ -173,6 +197,15 @@ const Header = ({ isMenuOpen, toggleMenu, userLocation, setUserLocation }) => {
                         {userType === 'customer' && (
                           <a href="/user-dashboard" className="block py-2 px-3 text-gray-700 hover:bg-gray-100 rounded transition-colors text-sm">My Dashboard</a>
                         )}
+                        <button 
+                          onClick={handleLogout}
+                          className="w-full text-left py-2 px-3 text-red-600 hover:bg-red-50 rounded transition-colors text-sm flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          Logout
+                        </button>
                       </>
                     ) : (
                       <>
@@ -180,11 +213,11 @@ const Header = ({ isMenuOpen, toggleMenu, userLocation, setUserLocation }) => {
                         <a href="/business-dashboard" className="block py-2 px-3 text-green-600 hover:bg-green-50 rounded transition-colors text-sm">Login as Business</a>
                       </>
                     )}
-                    <a href="#" className="block py-2 px-3 text-gray-700 hover:bg-gray-100 rounded transition-colors text-sm">Support</a>
+                    {/* <a href="#" className="block py-2 px-3 text-gray-700 hover:bg-gray-100 rounded transition-colors text-sm">Support</a> */}
                     
-                    <h3 className="font-semibold text-[#213A59] border-b pb-2 pt-3 text-sm sm:text-base">Company</h3>
+                    {/* <h3 className="font-semibold text-[#213A59] border-b pb-2 pt-3 text-sm sm:text-base">Company</h3>
                     <a href="#" className="block py-2 px-3 text-gray-700 hover:bg-gray-100 rounded transition-colors text-sm">About Us</a>
-                    <a href="#" className="block py-2 px-3 text-gray-700 hover:bg-gray-100 rounded transition-colors text-sm">Contact</a>
+                    <a href="#" className="block py-2 px-3 text-gray-700 hover:bg-gray-100 rounded transition-colors text-sm">Contact</a> */}
                   </div>
                 </div>
               </div>
