@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { techniciansData, reviewsData } from '../data/techniciansData';
 import apiService from '../services/api';
+import { showSuccess, showError, showWarning } from '../utils/alert';
+import { getUserInfo, isUserLoggedIn } from '../utils/userSession';
 
 const TechnicianReview = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Profile');
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
   const [technician, setTechnician] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +57,45 @@ const TechnicianReview = () => {
 
     fetchTechnician();
   }, [id]);
+
+  const handleQuoteRequest = () => {
+    const userInfo = getUserInfo();
+    
+    if (!isUserLoggedIn()) {
+      showWarning('Please log in or complete a job posting to request quotes.', 'Login Required');
+      return;
+    }
+
+    setShowQuoteModal(true);
+  };
+
+  const handleQuoteSubmit = async () => {
+    setIsSubmittingQuote(true);
+    const userInfo = getUserInfo();
+
+    try {
+      const result = await apiService.requestQuote(id, {
+        name: userInfo.name,
+        email: userInfo.email
+      });
+      
+      if (result.success) {
+        showSuccess('Quote request sent successfully! You will receive a confirmation email shortly.', 'Quote Requested');
+        setShowQuoteModal(false);
+      } else {
+        showError('Failed to send quote request. Please try again.', 'Request Failed');
+      }
+    } catch (error) {
+      console.error('Error sending quote request:', error);
+      showError('An error occurred while sending your quote request. Please try again.', 'Request Error');
+    } finally {
+      setIsSubmittingQuote(false);
+    }
+  };
+
+  const closeQuoteModal = () => {
+    setShowQuoteModal(false);
+  };
 
   if (loading) {
     return (
@@ -445,7 +488,7 @@ const TechnicianReview = () => {
                 
             <div className="flex items-center gap-6">
                   <button 
-                    onClick={() => setShowContactModal(true)}
+                    onClick={handleQuoteRequest}
                     className="bg-[#AF2638] text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-red-700 transition-colors flex items-center gap-3"
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -517,7 +560,7 @@ const TechnicianReview = () => {
                 Call Now
               </button> */}
               <button 
-                onClick={() => setShowContactModal(true)}
+                onClick={handleQuoteRequest}
                 className="flex-1 bg-[#AF2638] text-white py-2.5  text-xs font-medium"
               >
                 Get A Free Quote
@@ -727,6 +770,113 @@ const TechnicianReview = () => {
                 </button> */}
                 <button className="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors">
                   Send Message
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quote Request Modal */}
+      {showQuoteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#213A59] to-[#AF2638] rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Request Free Quote</h3>
+                    <p className="text-sm text-gray-500">Get a professional estimate</p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeQuoteModal}
+                  className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="mb-6">
+                <p className="text-gray-700 mb-4">
+                  Request a free quote from <span className="font-semibold text-[#AF2638]">{technician?.name}</span>
+                </p>
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src={technician?.image || '/placeholder-technician.jpg'} 
+                      alt={technician?.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.src = '/placeholder-technician.jpg';
+                      }}
+                    />
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900">{technician?.name}</h4>
+                      <p className="text-sm text-gray-500">{technician?.specialization || 'HVAC Technician'}</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-sm font-medium text-gray-900">{technician?.rating}</span>
+                        <span className="text-yellow-400">★</span>
+                        <span className="text-xs text-gray-500">({technician?.reviews} reviews)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm text-blue-800 font-medium">What happens next?</p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        The technician will receive your request and contact you directly with a personalized quote.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={closeQuoteModal}
+                  disabled={isSubmittingQuote}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleQuoteSubmit}
+                  disabled={isSubmittingQuote}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-[#213A59] to-[#AF2638] text-white font-medium rounded-lg hover:from-[#1a2d47] hover:to-[#8f1e2f] disabled:opacity-50 transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  {isSubmittingQuote ? (
+                    <>
+                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                      Send Request
+                    </>
+                  )}
                 </button>
               </div>
             </div>

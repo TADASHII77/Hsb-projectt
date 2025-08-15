@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTechnicians } from '../hooks/useTechnicians';
 import { allTechnicians } from '../data/techniciansData';
 import apiService from '../services/api';
+import { showSuccess, showError, showWarning } from '../utils/alert';
+import { getUserInfo, isUserLoggedIn } from '../utils/userSession';
 
 const TechniciansList = ({ searchFilters, updateSearchFilters }) => {
   const navigate = useNavigate();
@@ -11,10 +13,8 @@ const TechniciansList = ({ searchFilters, updateSearchFilters }) => {
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [selectedTechnician, setSelectedTechnician] = useState(null);
-  const [customerData, setCustomerData] = useState({
-    name: '',
-    email: ''
-  });
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [quoteType, setQuoteType] = useState('single'); // 'single' or 'bulk'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { technicians: apiTechnicians, loading, error, isUsingFallback } = useTechnicians();
 
@@ -105,46 +105,107 @@ const TechniciansList = ({ searchFilters, updateSearchFilters }) => {
     return technician.technicianId || technician.id;
   };
 
-  const handleQuoteRequest = (technician) => {
-    setSelectedTechnician(technician);
-    setShowQuoteModal(true);
+  const handleQuoteRequest = (type, technician = null) => {
+    const userInfo = getUserInfo();
+    
+    if (!isUserLoggedIn()) {
+      showWarning('Please log in or complete a job posting to request quotes.', 'Login Required');
+      return;
+    }
+
+    if (type === 'bulk') {
+      // Handle bulk quote request - get first 3 technicians
+      const availableTechnicians = filteredTechnicians.slice(0, 3);
+      if (availableTechnicians.length === 0) {
+        showWarning('No technicians available for quote requests.', 'No Technicians');
+        return;
+      }
+      
+      setSelectedTechnician(availableTechnicians);
+      setQuoteType('bulk');
+      setShowConfirmModal(true);
+    } else {
+      // Handle individual quote request
+      setSelectedTechnician(technician);
+      setQuoteType('single');
+      setShowConfirmModal(true);
+    }
   };
 
-  const handleQuoteSubmit = async (e) => {
-    e.preventDefault();
+  const handleQuoteSubmit = async () => {
     setIsSubmitting(true);
+    const userInfo = getUserInfo();
 
     try {
-      const techId = getTechnicianId(selectedTechnician);
-      const result = await apiService.requestQuote(techId, customerData);
+      if (quoteType === 'bulk') {
+        // Handle bulk quote request
+        const results = [];
+        const technicians = Array.isArray(selectedTechnician) ? selectedTechnician : [selectedTechnician];
+        
+        for (const tech of technicians) {
+          const techId = getTechnicianId(tech);
+          try {
+            const result = await apiService.requestQuote(techId, {
+              name: userInfo.name,
+              email: userInfo.email
+            });
+            results.push({ tech: tech.name, success: result.success });
+            
+            if (result.success) {
+              const newSelected = new Set(selectedQuotes);
+              newSelected.add(techId);
+              setSelectedQuotes(newSelected);
+            }
+          } catch (error) {
+            results.push({ tech: tech.name, success: false });
+          }
+        }
+        
+        const successCount = results.filter(r => r.success).length;
+        const totalCount = results.length;
+        
+        if (successCount === totalCount) {
+          showSuccess(`Quote requests sent to all ${totalCount} technicians successfully!`, 'Bulk Quotes Sent');
+        } else if (successCount > 0) {
+          showWarning(`Quote requests sent to ${successCount} out of ${totalCount} technicians.`, 'Partial Success');
+        } else {
+          showError('Failed to send quote requests. Please try again.', 'Request Failed');
+        }
+      } else {
+        // Handle single quote request
+        const techId = getTechnicianId(selectedTechnician);
+        const result = await apiService.requestQuote(techId, {
+          name: userInfo.name,
+          email: userInfo.email
+        });
+        
+        if (result.success) {
+          const newSelected = new Set(selectedQuotes);
+          newSelected.add(techId);
+          setSelectedQuotes(newSelected);
+          
+          showSuccess('Quote request sent successfully! You will receive a confirmation email shortly.', 'Quote Requested');
+        } else {
+          showError('Failed to send quote request. Please try again.', 'Request Failed');
+        }
+      }
       
-      if (result.success) {
-        // Mark as quote requested
-    const newSelected = new Set(selectedQuotes);
-        newSelected.add(techId);
-        setSelectedQuotes(newSelected);
-        
-        // Close modal and reset form
-        setShowQuoteModal(false);
-        setCustomerData({ name: '', email: '' });
-        setSelectedTechnician(null);
-        
-        alert('Quote request sent successfully! You will receive a confirmation email shortly.');
-    } else {
-        alert('Failed to send quote request. Please try again.');
-    }
+      // Close modal and reset
+      setShowConfirmModal(false);
+      setSelectedTechnician(null);
+      setQuoteType('single');
     } catch (error) {
       console.error('Error sending quote request:', error);
-      alert('An error occurred while sending your quote request. Please try again.');
+      showError('An error occurred while sending your quote request. Please try again.', 'Request Error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const closeQuoteModal = () => {
-    setShowQuoteModal(false);
-    setCustomerData({ name: '', email: '' });
+  const closeConfirmModal = () => {
+    setShowConfirmModal(false);
     setSelectedTechnician(null);
+    setQuoteType('single');
   };
 
   const handleTechnicianClick = (technician) => {
@@ -242,7 +303,7 @@ const TechniciansList = ({ searchFilters, updateSearchFilters }) => {
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              handleQuoteRequest(tech);
+              handleQuoteRequest('single', tech);
             }}
             className={` py-2 px-4 rounded-md text-sm font-medium flex items-center justify-center gap-2 ${
               selectedQuotes.has(getTechnicianId(tech)) 
@@ -326,7 +387,7 @@ const TechniciansList = ({ searchFilters, updateSearchFilters }) => {
             <button 
               onClick={(e) => {
                 e.stopPropagation();
-                handleQuoteRequest(tech);
+                handleQuoteRequest('single', tech);
               }}
               className={`w-52 h-10 flex items-center justify-center gap-2 font-semibold rounded-md shadow transition-colors duration-200 ${
                 selectedQuotes.has(getTechnicianId(tech)) 
@@ -757,66 +818,142 @@ const TechniciansList = ({ searchFilters, updateSearchFilters }) => {
         )}
       </div>
 
-      {/* Quote Request Modal */}
-      {showQuoteModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                Request Quote from {selectedTechnician?.name}
-              </h3>
-              
-              <form onSubmit={handleQuoteSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Your Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={customerData.name}
-                    onChange={(e) => setCustomerData({...customerData, name: e.target.value})}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#AF2638]"
-                    required
-                    disabled={isSubmitting}
-                  />
+      {/* Quote Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#213A59] to-[#AF2638] rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {quoteType === 'bulk' ? 'Request Multiple Quotes' : 'Request Free Quote'}
+                    </h3>
+                    <p className="text-sm text-gray-500">Get professional estimates</p>
+                  </div>
                 </div>
+                <button
+                  onClick={closeConfirmModal}
+                  className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="mb-6">
+                {quoteType === 'bulk' ? (
+                  <div>
+                    <p className="text-gray-700 mb-4">
+                      You're about to request quotes from the top 3 technicians:
+                    </p>
+                    <div className="space-y-2 mb-4">
+                      {Array.isArray(selectedTechnician) && selectedTechnician.slice(0, 3).map((tech, index) => (
+                        <div key={getTechnicianId(tech)} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="w-8 h-8 bg-[#AF2638] text-white rounded-full flex items-center justify-center text-sm font-medium">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">{tech.name}</p>
+                            <p className="text-sm text-gray-500">{tech.specialization}</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm font-medium text-gray-900">{tech.rating}</span>
+                              <span className="text-yellow-400">★</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-gray-700 mb-4">
+                      Request a free quote from <span className="font-semibold text-[#AF2638]">{selectedTechnician?.name}</span>
+                    </p>
+                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={selectedTechnician?.image || '/placeholder-technician.jpg'} 
+                          alt={selectedTechnician?.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                          onError={(e) => {
+                            e.target.src = '/placeholder-technician.jpg';
+                          }}
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">{selectedTechnician?.name}</h4>
+                          <p className="text-sm text-gray-500">{selectedTechnician?.specialization}</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <span className="text-sm font-medium text-gray-900">{selectedTechnician?.rating}</span>
+                            <span className="text-yellow-400">★</span>
+                            <span className="text-xs text-gray-500">({selectedTechnician?.reviews} reviews)</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Your Email *
-                  </label>
-                  <input
-                    type="email"
-                    value={customerData.email}
-                    onChange={(e) => setCustomerData({...customerData, email: e.target.value})}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#AF2638]"
-                    required
-                    disabled={isSubmitting}
-                  />
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm text-blue-800 font-medium">What happens next?</p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        {quoteType === 'bulk' 
+                          ? 'All selected technicians will receive your request and contact you directly with their quotes.'
+                          : 'The technician will receive your request and contact you directly with a personalized quote.'
+                        }
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="text-sm text-gray-600">
-                  <p>By requesting a quote, you agree to receive communication from the technician and our platform.</p>
-                </div>
-                
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={closeQuoteModal}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-[#AF2638] text-white rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Sending...' : 'Request Quote'}
-                  </button>
-                </div>
-              </form>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={closeConfirmModal}
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleQuoteSubmit}
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-[#213A59] to-[#AF2638] text-white font-medium rounded-lg hover:from-[#1a2d47] hover:to-[#8f1e2f] disabled:opacity-50 transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                      {quoteType === 'bulk' ? 'Send All Requests' : 'Send Request'}
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
