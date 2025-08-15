@@ -813,7 +813,7 @@ const TechnicianReview = () => {
                 <div className="bg-gray-50 rounded-lg p-4 mb-4">
                   <div className="flex items-center gap-3">
                     <img 
-                      src={technician?.image || '/placeholder-technician.jpg'} 
+                      src={technician?.logo || '/placeholder-technician.jpg'} 
                       alt={technician?.name}
                       className="w-12 h-12 rounded-full object-cover"
                       onError={(e) => {

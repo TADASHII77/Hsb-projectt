@@ -5,9 +5,13 @@ import cloudinary from '../services/cloudinary.js';
 import multer from 'multer';
 import streamifier from 'streamifier';
 import Job from '../models/Job.js';
+import { verifyAdminToken } from '../middleware/adminAuth.js';
 
 const router = express.Router();
 const upload = multer();
+
+// Apply admin authentication to all routes
+router.use(verifyAdminToken);
 
 // Upload to Cloudinary (multipart/form-data)
 router.post('/upload', upload.single('file'), async (req, res) => {

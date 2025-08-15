@@ -623,7 +623,7 @@ const TechniciansList = ({ searchFilters, updateSearchFilters }) => {
           
           <div 
             className={`flex justify-center items-center gap-2 border border-[#E5E5E5] rounded-md h-[34px] px-4 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-roboto font-medium cursor-pointer transition-colors ${
-              searchFilters.starExpertsOnly ? 'bg-[#AF2638] text-white' : 'bg-[#F3F3F3] text-gray-600'
+              searchFilters.starExpertsOnly ? 'bg-[#213A59] text-white' : 'bg-[#F3F3F3] text-gray-600'
             }`}
             onClick={() => handleFilterChange('starExpertsOnly', !searchFilters.starExpertsOnly)}
           >
@@ -635,7 +635,7 @@ const TechniciansList = ({ searchFilters, updateSearchFilters }) => {
           
           <div 
             className={`flex justify-center items-center gap-2 border border-[#E5E5E5] rounded-md h-[34px] px-4 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-roboto font-medium cursor-pointer transition-colors ${
-              searchFilters.bureauVerifiedOnly ? 'bg-[#AF2638] text-white' : 'bg-[#F3F3F3] text-gray-600'
+              searchFilters.bureauVerifiedOnly ? 'bg-[#213A59] text-white' : 'bg-[#F3F3F3] text-gray-600'
             }`}
             onClick={() => handleFilterChange('bureauVerifiedOnly', !searchFilters.bureauVerifiedOnly)}
           >

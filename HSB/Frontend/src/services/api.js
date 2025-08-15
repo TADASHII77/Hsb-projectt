@@ -15,11 +15,22 @@ class ApiService {
 
   async fetchWithErrorHandling(url, options = {}) {
     try {
+      // Add admin token if available and URL is admin-related
+      const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      };
+
+      // Check if this is an admin request and add auth header
+      if (url.includes('/admin')) {
+        const adminToken = localStorage.getItem('adminToken');
+        if (adminToken) {
+          headers['Authorization'] = `Bearer ${adminToken}`;
+        }
+      }
+
       const response = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
+        headers,
         ...options,
       });
 

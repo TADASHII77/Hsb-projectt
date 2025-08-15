@@ -6,10 +6,12 @@ import UserManagement from '../components/admin/UserManagement';
 import JobManagement from '../components/admin/JobManagement';
 import Analytics from '../components/admin/Analytics';
 import Settings from '../components/admin/Settings';
+import AdminAuthGuard, { useAdminAuth } from '../components/admin/AdminAuthGuard';
 
-const AdminDashboard = () => {
+const AdminDashboardContent = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const { adminUser, handleLogout } = useAdminAuth();
 
   const navigationItems = [
     { name: 'Overview', path: '/admin', icon: '📊', exact: true },
@@ -83,10 +85,14 @@ const AdminDashboard = () => {
                 <span className="text-white font-bold">A</span>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-semibold text-gray-900">Admin User</p>
-                <p className="text-xs text-gray-500">admin@hsb.com</p>
+                <p className="text-sm font-semibold text-gray-900">{adminUser?.name || 'Administrator'}</p>
+                <p className="text-xs text-gray-500">{adminUser?.email || 'admin@hsb.com'}</p>
               </div>
-              <button className="ml-auto text-gray-400 hover:text-gray-600 p-1">
+              <button 
+                onClick={handleLogout}
+                className="ml-auto text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-200 rounded transition-colors"
+                title="Logout"
+              >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
@@ -179,6 +185,15 @@ const AdminDashboard = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Main AdminDashboard component wrapped with authentication
+const AdminDashboard = () => {
+  return (
+    <AdminAuthGuard>
+      <AdminDashboardContent />
+    </AdminAuthGuard>
   );
 };
 
