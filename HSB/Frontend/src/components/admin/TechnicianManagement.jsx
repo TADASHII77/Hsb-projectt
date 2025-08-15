@@ -93,13 +93,22 @@ const TechnicianManagement = () => {
     e.preventDefault();
     try {
       if (showEditModal) {
-        // Update technician logic here
-        console.log('Updating technician:', selectedTechnician.id, formData);
-        // await apiService.updateTechnician(selectedTechnician.id, formData);
+        // Update technician
+        const techId = selectedTechnician.technicianId || selectedTechnician.id;
+        const result = await apiService.updateTechnician(techId, formData);
+        if (result.success) {
+          alert('Technician updated successfully!');
+        } else {
+          alert('Failed to update technician: ' + (result.message || 'Unknown error'));
+        }
       } else {
-        // Add new technician logic here
-        console.log('Adding new technician:', formData);
-        // await apiService.createTechnician(formData);
+        // Add new technician
+        const result = await apiService.createTechnician(formData);
+        if (result.success) {
+          alert('Technician created successfully!');
+        } else {
+          alert('Failed to create technician: ' + (result.message || 'Unknown error'));
+        }
       }
       
       setShowAddModal(false);
@@ -109,18 +118,23 @@ const TechnicianManagement = () => {
       refetch();
     } catch (error) {
       console.error('Error saving technician:', error);
+      alert('An error occurred while saving the technician. Please try again.');
     }
   };
 
   const handleDelete = async (technicianId) => {
     if (window.confirm('Are you sure you want to delete this technician?')) {
       try {
-        // Delete technician logic here
-        console.log('Deleting technician:', technicianId);
-        // await apiService.deleteTechnician(technicianId);
-        refetch();
+        const result = await apiService.deleteTechnician(technicianId);
+        if (result.success) {
+          alert('Technician deleted successfully!');
+          refetch();
+        } else {
+          alert('Failed to delete technician: ' + (result.message || 'Unknown error'));
+        }
       } catch (error) {
         console.error('Error deleting technician:', error);
+        alert('An error occurred while deleting the technician. Please try again.');
       }
     }
   };

@@ -31,6 +31,19 @@ const TechniciansList = ({ searchFilters, updateSearchFilters }) => {
       );
     }
 
+    // Filter by city/location
+    if (searchFilters.city && searchFilters.city !== 'Delhi') {
+      filtered = filtered.filter(tech => {
+        // Check if the city matches the service areas
+        const serviceAreas = tech.serviceAreas || '';
+        const address = tech.address || '';
+        const cityName = searchFilters.city.replace(', India', '').toLowerCase();
+        
+        return serviceAreas.toLowerCase().includes(cityName) || 
+               address.toLowerCase().includes(cityName);
+      });
+    }
+
     // Filter by category
     if (searchFilters.category && searchFilters.category !== 'Categories') {
       filtered = filtered.filter(tech => 

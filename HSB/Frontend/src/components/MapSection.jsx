@@ -21,18 +21,37 @@ const MapSection = ({ searchFilters, onSearch, updateSearchFilters }) => {
     'Emergency HVAC Service'
   ];
 
-  // City suggestions
+  // Popular city suggestions - expandable list
   const citySuggestions = [
-    'Delhi, India',
-    'Mumbai, India',
-    'Bangalore, India',
-    'Chennai, India',
-    'Kolkata, India',
-    'Hyderabad, India',
-    'Pune, India',
-    'Ahmedabad, India',
-    'Jaipur, India',
-    'Lucknow, India'
+    // India - Major cities
+    'Delhi', 'New Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Kolkata', 'Hyderabad', 'Pune', 'Ahmedabad', 'Jaipur', 'Lucknow', 'Gurgaon', 'Noida', 'Chandigarh', 'Kochi', 'Indore',
+    
+    // USA - Major cities and country
+    'USA', 'United States', 'New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose', 'Austin', 'Jacksonville', 'Fort Worth', 'Columbus', 'Charlotte', 'San Francisco', 'Indianapolis', 'Seattle', 'Denver', 'Washington DC', 'Boston', 'Nashville', 'Baltimore', 'Las Vegas', 'Portland', 'Detroit', 'Memphis', 'Louisville', 'Milwaukee', 'Albuquerque', 'Tucson', 'Fresno', 'Sacramento', 'Mesa', 'Kansas City', 'Atlanta', 'Colorado Springs', 'Omaha', 'Raleigh', 'Miami', 'Long Beach', 'Virginia Beach', 'Oakland', 'Minneapolis', 'Tampa', 'Tulsa', 'Arlington', 'New Orleans',
+    
+    // Canada - Major cities and country  
+    'Canada', 'Toronto', 'Montreal', 'Vancouver', 'Calgary', 'Edmonton', 'Ottawa', 'Winnipeg', 'Quebec City', 'Hamilton', 'Kitchener', 'London', 'Victoria', 'Halifax', 'Oshawa', 'Windsor', 'Saskatoon', 'St. Catharines', 'Regina', 'Sherbrooke', 'Kelowna', 'Barrie', 'Guelph', 'Kingston', 'Kanata',
+    
+    // UK - Major cities and country
+    'UK', 'United Kingdom', 'London', 'Birmingham', 'Manchester', 'Glasgow', 'Liverpool', 'Leeds', 'Sheffield', 'Edinburgh', 'Bristol', 'Cardiff', 'Leicester', 'Coventry', 'Bradford', 'Belfast', 'Nottingham', 'Hull', 'Newcastle', 'Stoke-on-Trent', 'Southampton', 'Derby', 'Portsmouth', 'Brighton', 'Plymouth', 'Northampton', 'Reading', 'Luton', 'Wolverhampton', 'Bolton', 'Bournemouth', 'Norwich', 'Swindon', 'Swansea', 'Southend-on-Sea', 'Middlesbrough', 'Peterborough', 'Cambridge', 'Doncaster', 'York', 'Poole', 'Gloucester', 'Burnley', 'Huddersfield', 'Telford', 'Watford', 'Oxford', 'Warrington', 'Slough', 'Stockport', 'Blackpool',
+    
+    // Australia - Major cities and country
+    'Australia', 'Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide', 'Gold Coast', 'Newcastle', 'Canberra', 'Central Coast', 'Wollongong', 'Logan City', 'Geelong', 'Hobart', 'Townsville', 'Cairns', 'Darwin', 'Toowoomba', 'Ballarat', 'Bendigo', 'Albury', 'Launceston', 'Mackay', 'Rockhampton', 'Bunbury', 'Bundaberg', 'Coffs Harbour', 'Wagga Wagga', 'Hervey Bay', 'Mildura', 'Shepparton', 'Port Macquarie', 'Gladstone', 'Tamworth', 'Traralgon', 'Orange', 'Bowral', 'Geraldton', 'Nowra', 'Warrnambool', 'Kalgoorlie', 'Albany', 'Blue Mountains', 'Dubbo', 'Goulburn',
+    
+    // Other major international cities
+    'Paris, France', 'Berlin, Germany', 'Rome, Italy', 'Madrid, Spain', 'Amsterdam, Netherlands', 'Brussels, Belgium', 'Vienna, Austria', 'Zurich, Switzerland', 'Stockholm, Sweden', 'Copenhagen, Denmark', 'Oslo, Norway', 'Helsinki, Finland', 'Dublin, Ireland', 'Lisbon, Portugal', 'Athens, Greece', 'Prague, Czech Republic', 'Warsaw, Poland', 'Budapest, Hungary', 'Bucharest, Romania', 'Sofia, Bulgaria', 'Zagreb, Croatia', 'Ljubljana, Slovenia', 'Bratislava, Slovakia', 'Tallinn, Estonia', 'Riga, Latvia', 'Vilnius, Lithuania',
+    
+    // Asian cities
+    'Tokyo, Japan', 'Seoul, South Korea', 'Beijing, China', 'Shanghai, China', 'Hong Kong', 'Singapore', 'Bangkok, Thailand', 'Manila, Philippines', 'Jakarta, Indonesia', 'Kuala Lumpur, Malaysia', 'Ho Chi Minh City, Vietnam', 'Hanoi, Vietnam', 'Phnom Penh, Cambodia', 'Yangon, Myanmar', 'Dhaka, Bangladesh', 'Karachi, Pakistan', 'Lahore, Pakistan', 'Islamabad, Pakistan', 'Kathmandu, Nepal', 'Colombo, Sri Lanka',
+    
+    // Middle Eastern cities
+    'Dubai, UAE', 'Abu Dhabi, UAE', 'Doha, Qatar', 'Kuwait City, Kuwait', 'Riyadh, Saudi Arabia', 'Jeddah, Saudi Arabia', 'Tel Aviv, Israel', 'Jerusalem, Israel', 'Amman, Jordan', 'Beirut, Lebanon', 'Baghdad, Iraq', 'Tehran, Iran', 'Istanbul, Turkey', 'Ankara, Turkey',
+    
+    // African cities
+    'Cairo, Egypt', 'Lagos, Nigeria', 'Johannesburg, South Africa', 'Cape Town, South Africa', 'Nairobi, Kenya', 'Casablanca, Morocco', 'Algiers, Algeria', 'Tunis, Tunisia', 'Accra, Ghana', 'Addis Ababa, Ethiopia',
+    
+    // South American cities
+    'São Paulo, Brazil', 'Rio de Janeiro, Brazil', 'Buenos Aires, Argentina', 'Lima, Peru', 'Bogotá, Colombia', 'Santiago, Chile', 'Caracas, Venezuela', 'Quito, Ecuador', 'La Paz, Bolivia', 'Montevideo, Uruguay'
   ];
 
   // Update local state when global filters change
@@ -53,6 +72,7 @@ const MapSection = ({ searchFilters, onSearch, updateSearchFilters }) => {
     const value = e.target.value;
     setJob(value);
     
+    // Only show suggestions, don't update filters until search button is clicked
     if (value.length > 0) {
       const filtered = jobSuggestions.filter(suggestion =>
         suggestion.toLowerCase().includes(value.toLowerCase())
@@ -68,6 +88,7 @@ const MapSection = ({ searchFilters, onSearch, updateSearchFilters }) => {
     const value = e.target.value;
     setCity(value);
     
+    // Only show suggestions, don't update filters until search button is clicked
     if (value.length > 0) {
       const filtered = citySuggestions.filter(suggestion =>
         suggestion.toLowerCase().includes(value.toLowerCase())
@@ -87,6 +108,7 @@ const MapSection = ({ searchFilters, onSearch, updateSearchFilters }) => {
       setCity(suggestion);
       setShowCitySuggestions(false);
     }
+    // Don't update filters here - wait for search button click
   };
 
   const handleKeyPress = (e) => {
@@ -95,31 +117,19 @@ const MapSection = ({ searchFilters, onSearch, updateSearchFilters }) => {
     }
   };
 
-  // Generate map URL based on city
+  // Generate map URL based on city - Dynamic version that works with any location
   const getMapUrl = () => {
     const location = city || searchFilters.city || 'Delhi, India';
     
-    // Define coordinates for major cities
-    const cityCoordinates = {
-      'Delhi, India': { lat: 28.6139, lng: 77.2090, zoom: 11 },
-      'Mumbai, India': { lat: 19.0760, lng: 72.8777, zoom: 11 },
-      'Bangalore, India': { lat: 12.9716, lng: 77.5946, zoom: 11 },
-      'Chennai, India': { lat: 13.0827, lng: 80.2707, zoom: 11 },
-      'Kolkata, India': { lat: 22.5726, lng: 88.3639, zoom: 11 },
-      'Hyderabad, India': { lat: 17.3850, lng: 78.4867, zoom: 11 },
-      'Pune, India': { lat: 18.5204, lng: 73.8567, zoom: 11 },
-      'Ahmedabad, India': { lat: 23.0225, lng: 72.5714, zoom: 11 },
-      'Jaipur, India': { lat: 26.9124, lng: 75.7873, zoom: 11 },
-      'Lucknow, India': { lat: 26.8467, lng: 80.9462, zoom: 11 }
-    };
-
-    // Get coordinates for the city or default to Delhi
-    const coords = cityCoordinates[location] || cityCoordinates['Delhi, India'];
+    // Clean and encode the location for URL
+    const cleanLocation = location.trim();
+    const encodedLocation = encodeURIComponent(cleanLocation);
     
-    // Create a Google Maps embed URL with the specific coordinates
-    // This doesn't require an API key for basic embed
-    const encodedLocation = encodeURIComponent(location);
-    return `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d${coords.zoom * 1000}!2d${coords.lng}!3d${coords.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2z${encodedLocation}!5e0!3m2!1sen!2sin!4v1683000000000!5m2!1sen!2sin`;
+    // Use Google Maps iframe src that can search for any location dynamically
+    // This method uses Google's built-in search without requiring an API key
+    const mapUrl = `https://maps.google.com/maps?width=100%25&height=400&hl=en&q=${encodedLocation}&t=&z=12&ie=UTF8&iwloc=&output=embed`;
+    
+    return mapUrl;
   };
 
   return (
@@ -184,8 +194,7 @@ const MapSection = ({ searchFilters, onSearch, updateSearchFilters }) => {
             
             <button
               onClick={handleSearch}
-              disabled={!job.trim() && !city.trim()}
-              className="w-full sm:w-36 px-4 sm:px-6 py-2 bg-red-600 text-white text-sm sm:text-base rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-36 px-4 sm:px-6 py-2 bg-red-600 text-white text-sm sm:text-base rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200"
             >
               Search
             </button>
@@ -212,6 +221,7 @@ const MapSection = ({ searchFilters, onSearch, updateSearchFilters }) => {
         {/* Map Container - Mobile responsive */}
         <div className="rounded-lg overflow-hidden border border-gray-300 shadow " style={{ height: '400px' }}>
           <iframe
+            key={`map-${searchFilters.city || 'Delhi'}`}
             title={`${job || 'HVAC Technicians'} in ${city || searchFilters.city || 'Delhi'}`}
             width="100%"
             height="100%"
