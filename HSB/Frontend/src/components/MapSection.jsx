@@ -137,7 +137,7 @@ const MapSection = ({ searchFilters, onSearch, updateSearchFilters }) => {
       <div className="mx-auto">
         {/* Search Bar - Mobile Responsive */}
         <div className="bg-[#213A59] p-3 sm:p-4 rounded-lg border">
-          <div className="flex flex-col gap-14 sm:flex-row sm:justify-center">
+          <div className="flex flex-col lg:gap-14 gap-4 sm:flex-row sm:justify-center">
             <div className="relative flex-1 sm:flex-none">
               <input
                 type="text"

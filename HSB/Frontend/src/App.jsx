@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useSearchParams, useLocation } from 'react-router-dom';
 import Header from './components/Header.jsx';
 import MapSection from './components/MapSection.jsx';
 import TechniciansList from './components/TechniciansList.jsx';
@@ -11,9 +11,41 @@ import Footer from './components/Footer.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import BusinessDashboard from './pages/BusinessDashboard.jsx';
 import UserDashboard from './pages/UserDashboard.jsx';
+import AlertContainer from './components/AlertContainer.jsx';
 
 // Home component that contains the main page layout
 const Home = ({ searchFilters, updateSearchFilters, handleSearch, isMenuOpen, toggleMenu, userLocation, setUserLocation }) => {
+  const [searchParams] = useSearchParams();
+  
+  // Handle URL parameters on component mount
+  useEffect(() => {
+    const jobParam = searchParams.get('job');
+    const cityParam = searchParams.get('city');
+    
+    if (jobParam || cityParam) {
+      console.log('Processing URL parameters:', { job: jobParam, city: cityParam });
+      
+      // Update search filters with URL parameters
+      const newFilters = {};
+      if (jobParam) newFilters.job = jobParam;
+      if (cityParam) newFilters.city = cityParam;
+      
+      updateSearchFilters(newFilters);
+      
+      // Also trigger search to ensure immediate filtering
+      if (jobParam || cityParam) {
+        handleSearch(jobParam || '', cityParam || '');
+      }
+      
+      // Clear URL parameters after setting filters (optional)
+      // This prevents the URL from staying cluttered
+      setTimeout(() => {
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }, 100);
+    }
+  }, [searchParams, updateSearchFilters]);
+
   return (
     <>
       <MapSection 
@@ -97,6 +129,7 @@ function App() {
         </Routes>
         
         <Footer />
+        <AlertContainer />
       </div>
     </Router>
   );

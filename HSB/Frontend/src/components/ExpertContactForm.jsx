@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateAndSendOtp, verifyOtp, clearOtp, getResendRemainingMs, formatSeconds } from '../services/otp';
+import { showSuccess, showError, showWarning, showInfo } from '../utils/alert';
 
 const ExpertContactForm = () => {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ const ExpertContactForm = () => {
   const handleSendVerification = (e) => {
     e.preventDefault();
     if (!formData.phone) {
-      alert('Please enter your phone number.');
+              showWarning('Please enter your phone number.', 'Missing Information');
       return;
     }
     try {
@@ -37,11 +38,11 @@ const ExpertContactForm = () => {
       // Also log directly for clarity (the service logs too)
       // eslint-disable-next-line no-console
       console.log('[OTP] Sent code:', code);
-      alert('Verification code sent to your phone number!');
+              showSuccess('Verification code sent to your phone number!', 'Code Sent');
       setStep(2);
       setResendRemainingMs(getResendRemainingMs(formData.phone));
     } catch (err) {
-      alert('Failed to send verification code. Please try again.');
+      showError('Failed to send verification code. Please try again.', 'Send Failed');
     } finally {
       setIsSendingCode(false);
     }
@@ -49,7 +50,7 @@ const ExpertContactForm = () => {
 
   const handleVerifyOtp = () => {
     if (!formData.phone || !formData.verificationCode) {
-      alert('Enter the verification code.');
+              showWarning('Enter the verification code.', 'Missing Code');
       return;
     }
     setIsVerifying(true);
@@ -57,10 +58,10 @@ const ExpertContactForm = () => {
     if (result.ok) {
       setOtpVerified(true);
       clearOtp(formData.phone);
-      alert('Phone verified! Please set your password.');
+              showSuccess('Phone verified! Please set your password.', 'Verification Success');
     } else {
       const reason = result.reason === 'EXPIRED' ? 'Code expired.' : result.reason === 'MISMATCH' ? 'Incorrect code.' : 'Invalid code.';
-      alert(reason);
+      showError(reason, 'Verification Failed');
     }
     setIsVerifying(false);
   };
@@ -76,7 +77,7 @@ const ExpertContactForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!otpVerified) {
-      alert('Please verify the OTP first.');
+              showWarning('Please verify the OTP first.', 'Verification Required');
       return;
     }
     try {
@@ -84,7 +85,7 @@ const ExpertContactForm = () => {
       const draft = localStorage.getItem('draftJob');
       const draftJob = draft ? JSON.parse(draft) : null;
       if (!draftJob) {
-        alert('Your job details were not found. Please start again.');
+                  showError('Your job details were not found. Please start again.', 'Missing Job Details');
         navigate('/job');
         return;
       }
@@ -98,7 +99,7 @@ const ExpertContactForm = () => {
         password: formData.password,
       });
       if (!regRes.success) {
-        alert(regRes.message || 'Error creating account');
+                  showError(regRes.message || 'Error creating account', 'Registration Failed');
         return;
       }
 
@@ -123,16 +124,23 @@ const ExpertContactForm = () => {
       const response = await api.post('/jobs', jobData);
 
       if (response.success) {
-        alert('Job posted successfully! You will be contacted by verified experts soon.');
+        showSuccess('Job posted successfully! You will be contacted by verified experts soon. We are now showing you relevant technicians for your job.', 'Job Posted Successfully');
         // Cleanup draft
         localStorage.removeItem('draftJob');
-        navigate('/user-dashboard');
+        
+        // Redirect to listing page with search filters based on job requirements
+        const searchParams = new URLSearchParams({
+          job: draftJob.service || '',
+          city: draftJob.city || ''
+        });
+        
+        navigate(`/?${searchParams.toString()}`);
       } else {
-        alert('Error posting job: ' + (response.message || 'Unknown error'));
+        showError('Error posting job: ' + (response.message || 'Unknown error'), 'Job Posting Failed');
       }
     } catch (err) {
       console.error('Error completing job posting:', err);
-      alert('Error submitting registration. Please try again.');
+      showError('Error submitting registration. Please try again.', 'Submission Error');
     }
   };
 

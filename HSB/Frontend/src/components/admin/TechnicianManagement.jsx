@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTechnicians } from '../../hooks/useTechnicians';
 import apiService from '../../services/api';
+import { showSuccess, showError, showWarning } from '../../utils/alert';
 
 const TechnicianManagement = () => {
   const { technicians, loading, refetch } = useTechnicians();
@@ -97,17 +98,17 @@ const TechnicianManagement = () => {
         const techId = selectedTechnician.technicianId || selectedTechnician.id;
         const result = await apiService.updateTechnician(techId, formData);
         if (result.success) {
-          alert('Technician updated successfully!');
+          showSuccess('Technician updated successfully!', 'Update Success');
         } else {
-          alert('Failed to update technician: ' + (result.message || 'Unknown error'));
+          showError('Failed to update technician: ' + (result.message || 'Unknown error'), 'Update Failed');
         }
       } else {
         // Add new technician
         const result = await apiService.createTechnician(formData);
-        if (result.success) {
-          alert('Technician created successfully!');
-        } else {
-          alert('Failed to create technician: ' + (result.message || 'Unknown error'));
+                if (result.success) {
+          showSuccess('Technician created successfully!', 'Creation Success');
+      } else {
+          showError('Failed to create technician: ' + (result.message || 'Unknown error'), 'Creation Failed');
         }
       }
       
@@ -118,7 +119,7 @@ const TechnicianManagement = () => {
       refetch();
     } catch (error) {
       console.error('Error saving technician:', error);
-      alert('An error occurred while saving the technician. Please try again.');
+      showError('An error occurred while saving the technician. Please try again.', 'Save Error');
     }
   };
 
@@ -126,15 +127,15 @@ const TechnicianManagement = () => {
     if (window.confirm('Are you sure you want to delete this technician?')) {
       try {
         const result = await apiService.deleteTechnician(technicianId);
-        if (result.success) {
-          alert('Technician deleted successfully!');
-          refetch();
+                if (result.success) {
+          showSuccess('Technician deleted successfully!', 'Delete Success');
+        refetch();
         } else {
-          alert('Failed to delete technician: ' + (result.message || 'Unknown error'));
+          showError('Failed to delete technician: ' + (result.message || 'Unknown error'), 'Delete Failed');
         }
       } catch (error) {
         console.error('Error deleting technician:', error);
-        alert('An error occurred while deleting the technician. Please try again.');
+        showError('An error occurred while deleting the technician. Please try again.', 'Delete Error');
       }
     }
   };
@@ -147,7 +148,7 @@ const TechnicianManagement = () => {
     } catch (error) {
       console.error('Error updating verification:', error);
       // Show user-friendly error message
-      alert('Failed to update verification status. Please try again.');
+      showError('Failed to update verification status. Please try again.', 'Verification Error');
     }
   };
 
