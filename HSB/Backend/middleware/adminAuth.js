@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
 // Admin credentials from environment variables
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'imadmin@gmail.com';
+const ADMIN_EMAIL_login = process.env.ADMIN_EMAIL_login || 'imadmin@gmail.com';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'rohti2002aug';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-for-admin-auth-2024';
 
@@ -20,7 +20,7 @@ const adminLogin = async (req, res) => {
     }
 
     // Check credentials
-    if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    if (email.toLowerCase() !== ADMIN_EMAIL_login.toLowerCase()) {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -39,7 +39,7 @@ const adminLogin = async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { 
-        email: ADMIN_EMAIL,
+        email: ADMIN_EMAIL_login,
         role: 'admin',
         isAdmin: true
       },
@@ -54,7 +54,7 @@ const adminLogin = async (req, res) => {
       data: {
         token,
         user: {
-          email: ADMIN_EMAIL,
+          email: ADMIN_EMAIL_login,
           role: 'admin',
           name: 'Administrator'
         }
@@ -88,7 +88,7 @@ const verifyAdminToken = (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     
     // Check if it's an admin token
-    if (!decoded.isAdmin || decoded.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    if (!decoded.isAdmin || decoded.email.toLowerCase() !== ADMIN_EMAIL_login.toLowerCase()) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. Admin privileges required.'
@@ -129,7 +129,7 @@ const checkAdminSession = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.isAdmin = decoded.isAdmin && decoded.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    req.isAdmin = decoded.isAdmin && decoded.email.toLowerCase() === ADMIN_EMAIL_login.toLowerCase();
     req.admin = decoded;
     next();
 
@@ -174,7 +174,7 @@ const verifyAdminStatus = (req, res) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    const isValidAdmin = decoded.isAdmin && decoded.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    const isValidAdmin = decoded.isAdmin && decoded.email.toLowerCase() === ADMIN_EMAIL_login.toLowerCase();
 
     res.json({
       success: true,

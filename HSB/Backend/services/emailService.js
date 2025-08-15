@@ -8,7 +8,7 @@ class EmailService {
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER || '2000rohitmehra@gmail.com',
+        user: process.env.EMAIL_USER ,
         pass: process.env.EMAIL_PASSWORD // App password for Gmail
       }
     });
@@ -17,7 +17,7 @@ class EmailService {
   async sendEmail(to, subject, html, text = '') {
     try {
       const mailOptions = {
-        from: process.env.EMAIL_USER || '2000rohitmehra@gmail.com',
+        from: process.env.EMAIL_USER,
         to,
         subject,
         html,
@@ -34,8 +34,8 @@ class EmailService {
   }
 
   async sendQuoteRequestEmails(technicianEmail, customerEmail, technicianName, customerName = 'Customer') {
-    const adminEmail = 'mairohitnhihu@gmail.com';
-    
+    const adminEmail = process.env.ADMIN_EMAIL 
+   
     try {
       // Email to business (technician)
       const businessEmailResult = await this.sendEmail(
