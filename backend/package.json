@@ -1,0 +1,43 @@
+{
+  "name": "hsb-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Home Service Bureau HVAC Directory",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "vercel-build": "echo 'No build step for API'",
+    "setup": "node setup-mongodb.js",
+    "migrate:emails": "node scripts/addEmailsToTechnicians.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@auth/express": "^0.11.0",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.3",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.5",
+    "streamifier": "^0.1.1",
+    "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
+  "keywords": [
+    "hvac",
+    "mongodb",
+    "express",
+    "api"
+  ],
+  "author": "",
+  "license": "ISC"
+}
